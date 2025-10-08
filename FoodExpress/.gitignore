@@ -1,0 +1,76 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# TypeScript / build output
+dist/
+build/
+out/
+lib/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+.nyc_output/
+coverage-*.json
+
+# Environment files
+.env
+.env.*
+.env.local
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Compiled source maps and JS (only ignore in build folders)
+# If you commit compiled JS, remove these lines or adapt to your output directory
+**/dist/**/*.js
+**/dist/**/*.js.map
+**/build/**/*.js
+**/build/**/*.js.map
+
+# Test and temp
+.cache/
+.jest/
+jest-cache/
+
+# Misc
+*.tgz
+*.zip
+*.tar.gz
+
+# Public uploads (if you store user uploads here during development)
+public/uploads/
+uploads/
+
+# PM2
+pm2-debug.log
+pm2.pid
+
+# Optional npm cache
+.npm/
