@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import express from 'express';
+import express, { Request, Response, NextFunction }from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
@@ -7,7 +7,6 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { connectDB } from "./config/database.js";
 
-import indexRouter from './routes/index.js';
 import usersRouter from './routes/users.js';
 import { ApiError, InternalError } from './utils/errors.js';
 
@@ -27,13 +26,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // front-end routes
-app.use('/', indexRouter);
+
 
 // back-end routes
 app.use('/api/users', usersRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     next(createError(404));
 });
 
@@ -46,7 +45,7 @@ connectDB().then(() => {
 });
 
 // error handler
-app.use(function(err: any, _req: any, res: any, _next: any) {
+app.use(function (err: any, _req: any, res: any, _next: any) {
     let status = 500;
     let message = 'Internal Server Error';
 
@@ -65,6 +64,20 @@ app.use(function(err: any, _req: any, res: any, _next: any) {
             error: status,
             message
         });
+});
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error("ERROR:", err.message);
+    console.error("Stacktrace:\n", err.stack); // 👈 ici
+
+    if (req.app.get("env") === "development") {
+        return res.status(err.status || 500).json({
+            message: err.message,
+            stack: err.stack,
+        });
+    }
+
+    res.status(err.status || 500).json({ message: "Internal server error" });
 });
 
 export default app;

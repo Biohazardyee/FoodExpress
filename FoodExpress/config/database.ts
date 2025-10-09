@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
-
-const uri = "mongodb+srv://noahgtours37_db_user:test@cluster0.rsiyghr.mongodb.net/maBase?retryWrites=true&w=majority&appName=Cluster0";
+import dotenv from "dotenv";
+dotenv.config();
+const uri = process.env.MONGO_DB || "";
 
 export async function connectDB() {
     try {
