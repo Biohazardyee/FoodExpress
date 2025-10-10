@@ -8,7 +8,7 @@ class UserService extends Service<IUser, string> {
     }
 
     async getAll(): Promise<IUser[]> {
-        return await User.find();
+        return User.find();
     }
 
     async getById(id: string): Promise<IUser> {
@@ -20,18 +20,18 @@ class UserService extends Service<IUser, string> {
     }
 
     async getByEmail(email: string): Promise<IUser | null> {
-        return await User.findOne({ email });
+        return User.findOne({email});
     }
 
     async getByUsername(username: string): Promise<IUser | null> {
-        return await User.findOne({
+        return User.findOne({
             username
         });
     }
 
-    async register(data: Partial<IUser>): Promise<IUser> {
-        return await User.create(data);
-    }
+    // async register(data: Partial<IUser>): Promise<IUser> {
+    //     return await User.create(data);
+    // }
 
     async update(id: string, patch: Partial<IUser>): Promise<IUser> {
         const updatedUser = await User.findByIdAndUpdate(id, patch, { new: true });

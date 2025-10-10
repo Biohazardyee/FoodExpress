@@ -19,23 +19,37 @@ class UserController extends Controller {
 
     async add(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, username, password } = req.body;
+            const { email, username, password, roles } = req.body;
             if (!email || !username || !password) {
                 throw new BadRequest('Email, username and password are required');
             }
-            const existingUser = await this.service.getByEmail(email) || await this.service.getByUsername(username);
+
+            const existingUser = await this.service.getByEmail(email)
+                || await this.service.getByUsername(username);
             if (existingUser) {
                 throw new BadRequest('Email or username already in use');
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            const createdUser = await this.service.add({
+
+            // On crée l'objet user sans mettre 'role' si non fourni
+            const newUserData: Partial<IUser> = {
                 username,
                 email,
                 password: hashedPassword,
-                role: 'user'
-            } as IUser);
-            res.status(201).json(createdUser);
+            };
+
+            // Si un rôle est envoyé dans la requête, on l'ajoute
+            if (roles) {
+                newUserData.roles = roles;
+            }
+
+            const createdUser = await this.service.add(newUserData as IUser);
+
+            res.status(201).json({
+                message: "Utilisateur créé avec succès ✅",
+                user: createdUser
+            });
         }
         catch (err) {
             next(err);
@@ -60,7 +74,7 @@ class UserController extends Controller {
             }
 
             const token = jwt.sign(
-                { id: user._id, email: user.email, role: user.role },
+                { id: user._id, email: user.email, username: user.username, roles: user.roles },
                 process.env.JWT_SECRET || 'defaultsecret',
                 { expiresIn: '1h' }
             );
@@ -71,7 +85,7 @@ class UserController extends Controller {
                     id: user._id,
                     name: user.username,
                     email: user.email,
-                    rols: [user.role]
+                    roles: [user.roles]
                 }
             });
         }
@@ -107,21 +121,27 @@ class UserController extends Controller {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
 
-            const { username, email, password, role } = req.body;
+            const { username, email, password, roles } = req.body;
 
             const patch: Partial<IUser> = {};
 
             if (username) patch.username = username;
             if (email) patch.email = email;
-            if (role) patch.role = role;
+            if (roles) patch.roles = roles;
             if (password) patch.password = await bcrypt.hash(password, 10);
 
             const updatedUser = await this.service.update(id, patch);
-            res.json(updatedUser);
+
+            res.json({
+                message: "L'utilisateur a bien été mis à jour ✅",
+                user: updatedUser
+            });
+
         } catch (e) {
             next(e);
         }
     }
+
 
     async delete(req: Request, res: Response, next: NextFunction) {
         try {

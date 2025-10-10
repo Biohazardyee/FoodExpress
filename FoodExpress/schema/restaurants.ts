@@ -11,7 +11,7 @@ export interface IRestaurant extends Document {
 }
 
 const RestaurantSchema = new Schema<IRestaurant>({
-    name: { type: String, required: true },
+    name: { type: String, required: true, unique: true },
     address: { type: String, required: true },
     phone: { type: String, required: true },
     opening_hours: { type: String, required: true }

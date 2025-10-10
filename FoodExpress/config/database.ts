@@ -16,6 +16,6 @@ export async function connectDB() {
         console.log("✅ Connecté à MongoDB Atlas !");
     } catch (err) {
         console.error("❌ Erreur de connexion MongoDB :", err);
-        process.exit(1); // Arrête l'app si la connexion échoue
+        process.exit(1);
     }
 }
