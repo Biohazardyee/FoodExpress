@@ -9,7 +9,7 @@ import { connectDB } from "./config/database.js";
 
 import usersRouter from './routes/users.js';
 import restaurantsRouter from './routes/restaurants.js';
-// import menusRouter from './routes/menus.js';
+import menusRouter from './routes/menus.js';
 import { ApiError, InternalError } from './utils/errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,7 +33,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // back-end routes
 app.use('/api/users', usersRouter);
 app.use('/api/restaurants', restaurantsRouter);
-// app.use('/api/menus', menusRouter);
+app.use('/api/menus', menusRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

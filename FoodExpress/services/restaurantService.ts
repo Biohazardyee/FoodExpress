@@ -7,8 +7,9 @@ class RestaurantService extends Service<IRestaurant, string> {
         return await Restaurant.create(data);
     }
 
-    async getAll(sort: any): Promise<IRestaurant[]> {
-        return Restaurant.find().sort(sort);
+    async getAll(sort: any, page = 1, limit = 10): Promise<IRestaurant[]> {
+        const skip = (page - 1) * limit;
+        return Restaurant.find().sort(sort).skip(skip).limit(limit).exec();
     }
 
     async getById(id: string): Promise<IRestaurant> {

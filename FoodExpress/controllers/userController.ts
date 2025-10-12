@@ -82,10 +82,10 @@ class UserController extends Controller {
                 message: 'Login successful',
                 token,
                 user: {
-                    id: user._id,
+                    id: user._id.toString(),
                     name: user.username,
                     email: user.email,
-                    roles: [user.roles]
+                    roles: user.roles
                 }
             });
         }

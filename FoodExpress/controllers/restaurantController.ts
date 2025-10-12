@@ -64,7 +64,17 @@ class RestaurantController extends Controller {
                 }
             }
 
-            const restaurants = await this.service.getAll(sort);
+            // Pagination: page (1-based) and limit (default 10)
+            const pageParam = req.query.page as string | undefined;
+            const limitParam = req.query.limit as string | undefined;
+            const page = pageParam ? parseInt(pageParam, 10) : 1;
+            const limit = limitParam ? parseInt(limitParam, 10) : 10;
+            if (Number.isNaN(page) || page < 1) throw new BadRequest('Invalid page parameter');
+            if (Number.isNaN(limit) || limit < 1) throw new BadRequest('Invalid limit parameter');
+            const maxLimit = 100;
+            const clampedLimit = Math.min(limit, maxLimit);
+
+            const restaurants = await this.service.getAll(sort, page, clampedLimit);
 
             res.json(restaurants);
         } catch (error) {

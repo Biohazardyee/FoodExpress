@@ -17,4 +17,16 @@ const UserSchema = new Schema<IUser>({
     timestamps: true
 });
 
+// Remove sensitive fields when sending JSON responses
+UserSchema.set('toJSON', {
+    transform: function (_doc, ret) {
+        const r: any = ret;
+        r.id = r._id;
+        delete r._id;
+        delete r.__v;
+        delete r.password; // remove hashed password
+        return r;
+    }
+});
+
 export const User = mongoose.model<IUser>('User', UserSchema);
