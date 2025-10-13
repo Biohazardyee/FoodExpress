@@ -5,7 +5,7 @@ import { IRestaurant } from "./restaurants.js";
 
 export interface IMenu extends Document {
     _id: Types.ObjectId;
-    restaurant: Types.ObjectId | IRestaurant;
+    restaurantId: Types.ObjectId | IRestaurant;
     name: string;
     description?: string;
     price: number;
@@ -14,7 +14,7 @@ export interface IMenu extends Document {
 
 const MenuSchema = new Schema<IMenu>(
     {
-        restaurant: { type: Schema.Types.ObjectId, ref: 'Restaurants', required: true },
+        restaurantId: { type: Schema.Types.ObjectId, ref: 'Restaurants', required: true },
         name: { type: String, required: true },
         description: { type: String },
         price: { type: Number, required: true },

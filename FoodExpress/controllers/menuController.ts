@@ -15,27 +15,32 @@ class MenuController extends Controller {
 
     async add(req: Request, res: Response, next: NextFunction) {
         try {
-            const { title, description, price, restaurant } = req.body;
-            if (!title || !description || !price || !restaurant) {
-                throw new BadRequest('Title, description, price and restaurant are required');
+            const { name, description, price, restaurantId, category } = req.body;
+            if (!name || !price || !restaurantId) {
+                throw new BadRequest('Title, price and restaurant are required');
             }
-            const restaurantExists = await restaurantService.getById(restaurant);
+            const restaurantExists = await restaurantService.getById(restaurantId);
 
             if (!restaurantExists) {
                 throw new BadRequest('Restaurant does not exist');
             }
 
             const newMenuData: Partial<IMenu> = {
-                name: title,
-                description,
+                name,
                 price,
-                restaurant
+                restaurantId
             };
+
+            if (description) newMenuData.description = description;
+            if (category) newMenuData.category = category;
+
             const newMenu = await this.service.add(newMenuData as IMenu);
+
             res.status(201).json({
                 message: "Menu créé avec succès ✅",
                 menu: newMenu
             });
+
         } catch (error) {
             next(error);
         }
@@ -65,15 +70,20 @@ class MenuController extends Controller {
             // Pagination: page (1-based) and limit (default 10)
             const pageParam = req.query.page as string | undefined;
             const limitParam = req.query.limit as string | undefined;
+
             const page = pageParam ? parseInt(pageParam, 10) : 1;
             const limit = limitParam ? parseInt(limitParam, 10) : 10;
+
             if (Number.isNaN(page) || page < 1) throw new BadRequest('Invalid page parameter');
             if (Number.isNaN(limit) || limit < 1) throw new BadRequest('Invalid limit parameter');
+
             const maxLimit = 100;
             const clampedLimit = Math.min(limit, maxLimit);
 
             const menus = await this.service.getAll(sort, page, clampedLimit);
+
             res.status(200).json(menus);
+
         } catch (error) {
             next(error);
         }
@@ -92,19 +102,36 @@ class MenuController extends Controller {
         }
     }
 
+    async getMenusByRestaurant(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { restaurantId } = req.params;
+            if (!restaurantId) {
+                return next(new BadRequest("Restaurant ID is required"));
+            }
+
+            const menus = await this.service.getMenusByRestaurant(restaurantId);
+            res.status(200).json(menus);
+
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async update(req: Request, res: Response, next: NextFunction) {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
-            const { title, description, price, restaurant } = req.body;
+            const { name, description, price, restaurantId, category } = req.body;
             const patch: Partial<IMenu> = {};
 
-            if (title) patch.name = title;
+            if (name) patch.name = name;
             if (description) patch.description = description;
             if (price) patch.price = price;
-            if (restaurant) patch.restaurant = restaurant;
+            if (restaurantId) patch.restaurantId = restaurantId;
+            if (category) patch.category = category;
 
             const updatedMenu = await this.service.update(id, patch);
+
             res.json({
                 message: "Le menu a bien été mis à jour ✅",
                 menu: updatedMenu

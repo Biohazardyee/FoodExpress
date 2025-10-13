@@ -2,6 +2,7 @@ import { Service } from './service.js';
 import { Menu, IMenu } from '../schema/menus.js';
 import { NotFound } from '../utils/errors.js';
 import { populate } from 'dotenv';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 class MenuService extends Service<IMenu, string> {
     async add(data: IMenu): Promise<IMenu> {
@@ -10,11 +11,11 @@ class MenuService extends Service<IMenu, string> {
 
     async getAll (sort: any, page = 1, limit = 10): Promise<IMenu[]> {
         const skip = (page - 1) * limit;
-        return Menu.find().sort(sort).skip(skip).limit(limit).populate('restaurant').exec();
+        return Menu.find().sort(sort).skip(skip).limit(limit).exec();
     }
 
     async getById(id: string): Promise<IMenu> {
-        const menu = await Menu.findById(id).populate('restaurant');
+        const menu = await Menu.findById(id);
         if (!menu) throw new NotFound('Menu not found');
         if (!populate) {
             return menu;
@@ -22,8 +23,14 @@ class MenuService extends Service<IMenu, string> {
         return menu;
     }
 
+    async getMenusByRestaurant(restaurantId: string): Promise<IMenu[]> {
+        return Menu.find({
+            restaurantId: new mongoose.Types.ObjectId(restaurantId)
+        });
+    }
+
     async update(id: string, patch: Partial<IMenu>): Promise<IMenu> {
-        const updatedMenu = await Menu.findByIdAndUpdate(id, patch, { new: true }).populate('restaurant');
+        const updatedMenu = await Menu.findByIdAndUpdate(id, patch, { new: true });
         if (!updatedMenu) throw new NotFound('Menu not found');
         return updatedMenu;
     }
