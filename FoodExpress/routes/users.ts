@@ -3,15 +3,18 @@ import userController from '../controllers/userController.js';
 import { authGuard } from '../middlewares/authMiddleware.js';
 import { checkAdminOrSelf } from "../middlewares/checkAdminOrSelf.js";
 import { checkAdmin } from "../middlewares/checkAdmin.js";
+import { validateUserRegistration, validateUserLogin, validateUserUpdate } from '../middlewares/userValidation.js';
 
 const router = express.Router();
 
 // unprotected routes (public)
 
 router.post('/login',
+    validateUserLogin,
     (req, res, next) => userController.login(req, res, next));
 
 router.post('/',
+    validateUserRegistration,
     (req, res, next) => userController.add(req, res, next));
 
 // Protected routes (user and admin)
@@ -25,6 +28,7 @@ router.delete('/:id', authGuard, checkAdminOrSelf,
 // Admin can update any profile
 
 router.put('/:id', authGuard, checkAdminOrSelf,
+    validateUserUpdate,
     (req, res, next) => userController.update(req, res, next));
 
 // Protected routes (only admin)

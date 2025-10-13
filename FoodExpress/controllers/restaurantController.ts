@@ -107,6 +107,14 @@ class RestaurantController extends Controller {
 
             const { name, address, phone, opening_hours } = req.body;
 
+            // Check if name is being updated and if it already exists
+            if (name) {
+                const existingRestaurant = await this.service.getByName(name);
+                if (existingRestaurant && existingRestaurant._id.toString() !== id) {
+                    throw new BadRequest('Name for this restaurant is already in use');
+                }
+            }
+
             const patch: Partial<IRestaurant> = {};
 
             if (name) patch.name = name;

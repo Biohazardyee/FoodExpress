@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { Unauthorized, BadRequest } from '../utils/errors.js';
+import { Unauthorized, BadRequest, Forbidden } from '../utils/errors.js';
 
 export function checkAdmin(req: Request, res: Response, next: NextFunction) {
     try {
-        const loggedUser = req.user;
+        // req.user set by auth middleware; cast to any to satisfy ts in tests
+        const loggedUser = (req as any).user;
 
         if (!loggedUser) {
             throw new BadRequest("Utilisateur non authentifié");
@@ -12,7 +13,7 @@ export function checkAdmin(req: Request, res: Response, next: NextFunction) {
         const isAdmin = loggedUser.roles?.includes('admin');
 
         if (!isAdmin) {
-            throw new Unauthorized("Accès refusé : réservé aux administrateurs");
+            throw new Forbidden("Accès refusé : réservé aux administrateurs");
         }
 
         next();

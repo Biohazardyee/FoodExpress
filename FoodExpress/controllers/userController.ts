@@ -6,6 +6,7 @@ import { IUser } from '../schema/users.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -20,14 +21,16 @@ class UserController extends Controller {
     async add(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, username, password, roles } = req.body;
-            if (!email || !username || !password) {
-                throw new BadRequest('Email, username and password are required');
+            
+            // Check for existing user
+            const existingUserByEmail = await this.service.getByEmail(email);
+            if (existingUserByEmail) {
+                throw new BadRequest('Email already in use');
             }
 
-            const existingUser = await this.service.getByEmail(email)
-                || await this.service.getByUsername(username);
-            if (existingUser) {
-                throw new BadRequest('Email or username already in use');
+            const existingUserByUsername = await this.service.getByUsername(username);
+            if (existingUserByUsername) {
+                throw new BadRequest('Username already in use');
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -59,9 +62,6 @@ class UserController extends Controller {
     async login(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password } = req.body;
-            if (!email || !password) {
-                throw new BadRequest('Email and password are required');
-            }
 
             const user = await this.service.getByEmail(email);
             if (!user) {
@@ -107,6 +107,12 @@ class UserController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
+            
+            // Validate ObjectId format
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return next(new BadRequest('Invalid ID format'));
+            }
+            
             const user = await this.service.getById(id);
             if (!user) return next(new NotFound('User not found'));
 
@@ -120,6 +126,11 @@ class UserController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
+
+            // Validate ObjectId format
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return next(new BadRequest('Invalid ID format'));
+            }
 
             const { username, email, password, roles } = req.body;
 
@@ -147,6 +158,11 @@ class UserController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
+
+            // Validate ObjectId format
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return next(new BadRequest('Invalid ID format'));
+            }
 
             const deletedUser = await this.service.delete(id);
             if (!deletedUser) return next(new NotFound('User not found'));

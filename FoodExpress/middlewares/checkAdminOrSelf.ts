@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { Unauthorized, BadRequest } from '../utils/errors.js';
+import { Unauthorized, BadRequest, Forbidden } from '../utils/errors.js';
 
 export function checkAdminOrSelf(req: Request, res: Response, next: NextFunction) {
     try {
-        const loggedUser = req.user;
+        // req.user is injected by auth middleware; cast to any to satisfy TS here
+        const loggedUser = (req as any).user;
         if (!loggedUser) {
             throw new BadRequest("Utilisateur non authentifié");
         }
@@ -15,7 +16,7 @@ export function checkAdminOrSelf(req: Request, res: Response, next: NextFunction
             return next();
         }
 
-        throw new Unauthorized("Accès refusé : réservé à l'utilisateur ou à un admin");
+        throw new Forbidden("Accès refusé : réservé à l'utilisateur ou à un admin");
 
     } catch (err) {
         next(err);

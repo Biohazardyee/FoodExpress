@@ -40,13 +40,9 @@ app.use(function (req, res, next) {
     next(createError(404));
 });
 
-const PORT = 3000;
-
-connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
-    });
-});
+// Export app without auto-connecting to database
+// Database connection is handled by bin/www.ts for the server
+// and by test files for testing
 
 // error handler
 app.use(function (err: any, _req: any, res: any, _next: any) {

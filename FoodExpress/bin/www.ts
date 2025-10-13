@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import app from '../app.js';
+import { connectDB } from '../config/database.js';
 import debugLib from 'debug';
 import http from 'http';
 
@@ -18,12 +19,17 @@ app.set('port', port);
 const server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
+ * Connect to database then start server
  */
-server.listen(port);
-console.log(`Listening on http://localhost:${port}`);
-server.on('error', onError);
-server.on('listening', onListening);
+connectDB().then(() => {
+    server.listen(port);
+    console.log(`🚀 Serveur lancé sur http://localhost:${port}`);
+    server.on('error', onError);
+    server.on('listening', onListening);
+}).catch((error) => {
+    console.error('❌ Erreur de connexion à la base de données:', error);
+    process.exit(1);
+});
 
 /**
  * Normalize a port into a number, string, or false.
