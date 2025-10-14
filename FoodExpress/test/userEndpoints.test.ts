@@ -18,18 +18,18 @@ describe('User Endpoints', () => {
             // Use test database connection with a dedicated test DB name
             const mongoUri = process.env.MONGO_DB || process.env.MONGO_URI;
             console.log('🔍 Environment MONGO_DB:', mongoUri);
-            
+
             if (!mongoUri) {
                 throw new Error('Please set MONGO_DB or MONGO_URI in .env file');
             }
-            
+
             // Connect with test database name
-            const testUri = mongoUri.includes('mongodb+srv') 
+            const testUri = mongoUri.includes('mongodb+srv')
                 ? mongoUri.replace(/\/[^/?]*\?/, '/foodexpress_test?')  // Atlas: replace DB name
                 : mongoUri.replace(/\/[^/?]*$/, '/foodexpress_test');   // Local: replace DB name
-                
+
             console.log('🔗 Connecting to:', testUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')); // Hide credentials
-            
+
             // Set connection timeout
             await mongoose.connect(testUri, {
                 serverSelectionTimeoutMS: 10000, // 10 second timeout
@@ -148,106 +148,106 @@ describe('User Endpoints', () => {
 
         it('should not register a user with missing password', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: generateRandomUsername(),
-                email: generateRandomEmail()
-                // password is missing
-            });
+                .post('/api/users')
+                .send({
+                    username: generateRandomUsername(),
+                    email: generateRandomEmail()
+                    // password is missing
+                });
             expect(res.status).to.equal(400);
             expect(res.body.message).to.equal('Email, username and password are required');
         });
 
         it('should not register a user with empty string fields', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: '',
-                email: '',
-                password: ''
-            });
+                .post('/api/users')
+                .send({
+                    username: '',
+                    email: '',
+                    password: ''
+                });
             expect(res.status).to.equal(400);
         });
 
         it('should not register a user with whitespace-only fields', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: '   ',
-                email: '   ',
-                password: '   '
-            });
+                .post('/api/users')
+                .send({
+                    username: '   ',
+                    email: '   ',
+                    password: '   '
+                });
             expect(res.status).to.equal(400);
         });
 
         it('should not register a user with username too short', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: 'ab', // too short
-                email: generateRandomEmail(),
-                password: generateRandomPassword()
-            });
+                .post('/api/users')
+                .send({
+                    username: 'ab', // too short
+                    email: generateRandomEmail(),
+                    password: generateRandomPassword()
+                });
             expect(res.status).to.equal(400);
         });
 
         it('should not register a user with username too long', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: 'a'.repeat(51), // too long
-                email: generateRandomEmail(),
-                password: generateRandomPassword()
-            });
+                .post('/api/users')
+                .send({
+                    username: 'a'.repeat(51), // too long
+                    email: generateRandomEmail(),
+                    password: generateRandomPassword()
+                });
             expect(res.status).to.equal(400);
         });
 
         it('should not register a user with invalid username characters', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: 'user@name!',
-                email: generateRandomEmail(),
-                password: generateRandomPassword()
-            });
+                .post('/api/users')
+                .send({
+                    username: 'user@name!',
+                    email: generateRandomEmail(),
+                    password: generateRandomPassword()
+                });
             expect(res.status).to.equal(400);
         });
 
         it('should handle malformed JSON request', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .set('Content-Type', 'application/json')
-            .send('{"invalid": json}');
+                .post('/api/users')
+                .set('Content-Type', 'application/json')
+                .send('{"invalid": json}');
             expect(res.status).to.equal(400);
         });
 
         it('should handle request with wrong content type', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .set('Content-Type', 'text/plain')
-            .send('username=test&email=test@example.com&password=testpass');
+                .post('/api/users')
+                .set('Content-Type', 'text/plain')
+                .send('username=test&email=test@example.com&password=testpass');
             expect(res.status).to.equal(500); // Express returns 500 for unparseable content
         });
 
         it('should not register a user with SQL injection attempt', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: "'; DROP TABLE users; --",
-                email: generateRandomEmail(),
-                password: generateRandomPassword()
-            });
+                .post('/api/users')
+                .send({
+                    username: "'; DROP TABLE users; --",
+                    email: generateRandomEmail(),
+                    password: generateRandomPassword()
+                });
             expect(res.status).to.equal(400);
         });
 
         it('should handle very long password', async () => {
             const res = await request(app)
-            .post('/api/users')
-            .send({
-                username: generateRandomUsername(),
-                email: generateRandomEmail(),
-                password: 'a'.repeat(1000)
-            });
+                .post('/api/users')
+                .send({
+                    username: generateRandomUsername(),
+                    email: generateRandomEmail(),
+                    password: 'a'.repeat(1000)
+                });
             // Should either accept or reject with appropriate status
             expect(res.status === 201 || res.status === 400);
         });

@@ -5,12 +5,12 @@ import { Restaurant } from '../schema/restaurants.js';
 import { User } from '../schema/users.js';
 import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
-import { 
-    generateRandomRestaurant, 
-    generateRandomRestaurantName, 
-    generateRandomAddress, 
-    generateRandomPhone, 
-    generateRandomOpeningHours 
+import {
+    generateRandomRestaurant,
+    generateRandomRestaurantName,
+    generateRandomAddress,
+    generateRandomPhone,
+    generateRandomOpeningHours
 } from './helpers.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
@@ -25,18 +25,18 @@ describe('Restaurant Endpoints', () => {
             // Use test database connection with a dedicated test DB name
             const mongoUri = process.env.MONGO_DB || process.env.MONGO_URI;
             console.log('🔍 Environment MONGO_DB:', mongoUri);
-            
+
             if (!mongoUri) {
                 throw new Error('Please set MONGO_DB or MONGO_URI in .env file');
             }
-            
+
             // Connect with test database name
-            const testUri = mongoUri.includes('mongodb+srv') 
+            const testUri = mongoUri.includes('mongodb+srv')
                 ? mongoUri.replace(/\/[^/?]*\?/, '/foodexpress_test?')  // Atlas: replace DB name
                 : mongoUri.replace(/\/[^/?]*$/, '/foodexpress_test');   // Local: replace DB name
-                
+
             console.log('🔗 Connecting to:', testUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')); // Hide credentials
-            
+
             // Set connection timeout
             await mongoose.connect(testUri, {
                 serverSelectionTimeoutMS: 10000, // 10 second timeout
@@ -83,7 +83,7 @@ describe('Restaurant Endpoints', () => {
 
         it('should return empty array when no restaurants exist', async () => {
             await Restaurant.deleteMany({});
-            
+
             const res = await request(app)
                 .get('/api/restaurants');
 
@@ -228,7 +228,7 @@ describe('Restaurant Endpoints', () => {
 
         it('should create a new restaurant as admin', async () => {
             const newRestaurant = generateRandomRestaurant();
-            
+
             const res = await request(app)
                 .post('/api/restaurants')
                 .set('Authorization', `Bearer ${adminToken}`)
@@ -410,7 +410,7 @@ describe('Restaurant Endpoints', () => {
 
         it('should return 404 for non-existent restaurant', async () => {
             const nonExistentId = '507f1f77bcf86cd799439011';
-            
+
             const res = await request(app)
                 .put(`/api/restaurants/${nonExistentId}`)
                 .set('Authorization', `Bearer ${adminToken}`)
@@ -514,7 +514,7 @@ describe('Restaurant Endpoints', () => {
 
         it('should return 404 for non-existent restaurant', async () => {
             const nonExistentId = '507f1f77bcf86cd799439011';
-            
+
             const res = await request(app)
                 .delete(`/api/restaurants/${nonExistentId}`)
                 .set('Authorization', `Bearer ${adminToken}`);

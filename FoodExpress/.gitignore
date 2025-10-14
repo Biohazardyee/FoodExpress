@@ -8,6 +8,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # Runtime data
 pids/
@@ -17,20 +18,39 @@ pids/
 
 # TypeScript / build output
 dist/
+dist-instrumented/
 build/
 out/
 lib/
 *.tsbuildinfo
 
+# Compiled JavaScript (only ignore in specific directories)
+dist/**/*.js
+dist/**/*.js.map
+build/**/*.js
+build/**/*.js.map
+out/**/*.js
+out/**/*.js.map
+
+# Don't ignore JavaScript config files in root
+!*.config.js
+!jest.config.js
+!webpack.config.js
+
 # Coverage reports
 coverage/
 .nyc_output/
+.c8rc.json
+lcov.info
 coverage-*.json
+*.lcov
 
 # Environment files
 .env
 .env.*
 .env.local
+.env.production
+.env.test
 
 # IDEs and editors
 .vscode/
@@ -41,36 +61,123 @@ coverage-*.json
 *.sln
 *.swp
 *~
+.project
+.classpath
+.settings/
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Compiled source maps and JS (only ignore in build folders)
-# If you commit compiled JS, remove these lines or adapt to your output directory
-**/dist/**/*.js
-**/dist/**/*.js.map
-**/build/**/*.js
-**/build/**/*.js.map
+# Dependency directories
+jspm_packages/
+bower_components/
 
-# Test and temp
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Temporary folders
+.tmp/
+.temp/
+
+# Test and temp files
 .cache/
 .jest/
 jest-cache/
+.tmp/
+tmp/
+temp/
 
-# Misc
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+data/
+
+# Session store
+sessions/
+
+# Miscellaneous
 *.tgz
 *.zip
 *.tar.gz
+*.rar
+*.7z
 
 # Public uploads (if you store user uploads here during development)
 public/uploads/
 uploads/
 
-# PM2
+# PM2 process manager
 pm2-debug.log
 pm2.pid
+ecosystem.config.js
 
-# Optional npm cache
-.npm/
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Next.js build output
+.next/
+
+# Nuxt.js build / generate output
+.nuxt/
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+.tmp/
+.temp/
+
+# Error logs
+error.log
+combined.log
+access.log
+
+# Test artifacts
+test-results.xml
+junit.xml
+
+# Package manager lock files (choose one to keep)
+# package-lock.json  # Uncomment to ignore npm lock file
+# yarn.lock          # Uncomment to ignore yarn lock file
+
+# Local development files
+.local
+.cache
+.history/
