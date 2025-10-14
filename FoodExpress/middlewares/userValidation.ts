@@ -10,6 +10,11 @@ export function validateUserRegistration(req: Request, res: Response, next: Next
             throw new BadRequest('Email, username and password are required');
         }
 
+        // Validate against empty/whitespace strings FIRST
+        if (!email.trim() || !username.trim() || !password.trim()) {
+            throw new BadRequest('Email, username and password cannot be empty or whitespace');
+        }
+
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
@@ -32,11 +37,6 @@ export function validateUserRegistration(req: Request, res: Response, next: Next
         const usernameRegex = /^[a-zA-Z0-9_]+$/;
         if (!usernameRegex.test(username)) {
             throw new BadRequest('Username can only contain letters, numbers, and underscores');
-        }
-
-        // Validate against empty/whitespace strings
-        if (!email.trim() || !username.trim() || !password.trim()) {
-            throw new BadRequest('Email, username and password cannot be empty or whitespace');
         }
 
         next();
