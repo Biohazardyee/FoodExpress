@@ -4,13 +4,14 @@ import { BadRequest } from '../utils/errors.js';
 export function validateUserRegistration(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, username, password } = req.body;
-        
+
+
         // Check required fields
         if (!email || !username || !password) {
             throw new BadRequest('Email, username and password are required');
         }
 
-        // Validate against empty/whitespace strings FIRST
+         // Validate against empty/whitespace strings FIRST
         if (!email.trim() || !username.trim() || !password.trim()) {
             throw new BadRequest('Email, username and password cannot be empty or whitespace');
         }
@@ -33,7 +34,7 @@ export function validateUserRegistration(req: Request, res: Response, next: Next
         if (username.length > 20) {
             throw new BadRequest('Username must be less than 20 characters');
         }
-        
+
         const usernameRegex = /^[a-zA-Z0-9_]+$/;
         if (!usernameRegex.test(username)) {
             throw new BadRequest('Username can only contain letters, numbers, and underscores');
@@ -48,7 +49,7 @@ export function validateUserRegistration(req: Request, res: Response, next: Next
 export function validateUserLogin(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, password } = req.body;
-        
+
         // Check required fields
         if (!email || !password) {
             throw new BadRequest('Email and password are required');
@@ -74,7 +75,7 @@ export function validateUserLogin(req: Request, res: Response, next: NextFunctio
 export function validateUserUpdate(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, username, password } = req.body;
-        
+
         // At least one field must be provided for update
         if (!email && !username && !password) {
             throw new BadRequest('At least one field (email, username, or password) must be provided for update');
@@ -99,7 +100,7 @@ export function validateUserUpdate(req: Request, res: Response, next: NextFuncti
             if (username.length > 20) {
                 throw new BadRequest('Username must be less than 20 characters');
             }
-            
+
             const usernameRegex = /^[a-zA-Z0-9_]+$/;
             if (!usernameRegex.test(username)) {
                 throw new BadRequest('Username can only contain letters, numbers, and underscores');

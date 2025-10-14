@@ -158,18 +158,6 @@ describe('User Endpoints', () => {
             expect(res.body.message).to.equal('Email, username and password are required');
         });
 
-        it('should not register a user with empty/whitespace fields', async () => {
-            const res = await request(app)
-                .post('/api/users')
-                .send({
-                    username: '',
-                    email: '',
-                    password: ''
-                });
-            expect(res.status).to.equal(400);
-            expect(res.body.message).to.equal('Email, username and password cannot be empty or whitespace');
-        });
-
         it('should not register a user with empty string fields', async () => {
             const res = await request(app)
                 .post('/api/users')
