@@ -5,8 +5,8 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { connectDB } from "./config/database.js";
-
+import YAML from 'yamljs';
+import swaggerUi from 'swagger-ui-express';
 import usersRouter from './routes/users.js';
 import restaurantsRouter from './routes/restaurants.js';
 import menusRouter from './routes/menus.js';
@@ -14,6 +14,7 @@ import { ApiError, InternalError } from './utils/errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const swaggerDocument = YAML.load(path.join(__dirname, './swagger.yml'));
 
 const app = express();
 
@@ -37,6 +38,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/users', usersRouter);
 app.use('/api/restaurants', restaurantsRouter);
 app.use('/api/menus', menusRouter);
+
+// Swagger route
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

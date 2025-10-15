@@ -1,0 +1,415 @@
+openapi: 3.0.0
+info:
+  title: FoodExpress API
+  version: 1.0.0
+  description: |
+    API RESTful pour la gestion des utilisateurs, restaurants et menus de FoodExpress.
+    Authentification JWT, gestion des rôles, pagination, tri, et documentation complète.
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /users:
+    post:
+      summary: Créer un nouvel utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: Utilisateur créé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    get:
+      summary: Liste des utilisateurs (admin uniquement)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /users/login:
+    post:
+      summary: Se connecter à son compte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInputConnection'
+      responses:
+        '201':
+          description: Utilisateur connecé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserConnection'
+  /users/{id}:
+    get:
+      summary: Obtenir les infos d’un utilisateur (soi-même ou admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: Modifier son compte (ou admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '200':
+          description: Utilisateur modifié
+    delete:
+      summary: Supprimer son compte (ou admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Utilisateur supprimé
+  /restaurants:
+    get:
+      summary: Liste des restaurants (public)
+      parameters:
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [name, address]
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Liste des restaurants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Restaurant'
+    post:
+      summary: Créer un restaurant (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestaurantInput'
+      responses:
+        '201':
+          description: Restaurant créé
+  /restaurants/{id}:
+    get:
+      summary: Détails d’un restaurant (public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails du restaurant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+    put:
+      summary: Modifier un restaurant (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestaurantInput'
+      responses:
+        '200':
+          description: Restaurant modifié
+    delete:
+      summary: Supprimer un restaurant (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Restaurant supprimé
+  /menus:
+    get:
+      summary: Liste des menus (public)
+      parameters:
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [price, category]
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Liste des menus
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Menu'
+    post:
+      summary: Créer un menu (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuInput'
+      responses:
+        '201':
+          description: Menu créé
+  /menus/{id}:
+    get:
+      summary: Détails d’un menu (public)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails du menu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Menu'
+    put:
+      summary: Modifier un menu (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuInput'
+      responses:
+        '200':
+          description: Menu modifié
+    delete:
+      summary: Supprimer un menu (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Menu supprimé
+
+  /menus/by-restaurant/{id}:
+    get:
+      summary: Liste des menus présent dans un restaurant
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des menus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuList'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+    UserInput:
+      type: object
+      properties:
+        email:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+    UserInputConnection:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    UserConnection:
+      type: object
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            username:
+              type: string
+            role:
+              type: string
+              enum: [user, admin]
+
+    Restaurant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        opening_hours:
+          type: string
+    RestaurantInput:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        opening_hours:
+          type: string
+    Menu:
+      type: object
+      properties:
+        id:
+          type: string
+        restaurant_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+    MenuInput:
+      type: object
+      properties:
+        restaurant_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+
+    MenuList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Menu'
