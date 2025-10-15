@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Controller } from './controller.js';
-import { Unauthorized, BadRequest, NotFound } from '../utils/errors.js';
+import { BadRequest, NotFound } from '../utils/errors.js';
 import menuService from '../services/menuService.js';
 import { IMenu } from '../schema/menus.js';
 import restaurantService from '../services/restaurantService.js';

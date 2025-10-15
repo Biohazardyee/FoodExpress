@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "nodemon --watch . --ext ts,json --exec tsx bin/www.ts",
     "build": "tsc",
-    "test": "node --loader ts-node/esm ./node_modules/mocha/bin/mocha.js test/*.test.ts --timeout 20000",
-    "test:coverage": "c8 npm test",
+    "test": "set NODE_ENV=test&& node --loader ts-node/esm ./node_modules/mocha/bin/mocha.js test/*.test.ts --timeout 20000",
+    "test:coverage": "set NODE_ENV=test&& c8 npm test",
     "coverage:report": "c8 report --reporter=html --reporter=text",
     "coverage:json": "c8 report --reporter=json",
     "clean": "powershell -Command \"Remove-Item -Recurse -Force coverage, .nyc_output, dist -ErrorAction SilentlyContinue\""

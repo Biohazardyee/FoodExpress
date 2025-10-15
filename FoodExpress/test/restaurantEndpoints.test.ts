@@ -5,6 +5,7 @@ import { Restaurant } from '../schema/restaurants.js';
 import { User } from '../schema/users.js';
 import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
+import bcrypt from 'bcrypt';
 import {
     generateRandomRestaurant,
     generateRandomRestaurantName,
@@ -12,56 +13,29 @@ import {
     generateRandomPhone,
     generateRandomOpeningHours
 } from './helpers.js';
-import dotenv from 'dotenv';
-import bcrypt from 'bcrypt';
-
-// Load environment variables
-dotenv.config();
+import { setupTestDatabase, teardownTestDatabase, createTestUsers } from './testSetup.js';
+import type { TestUsers } from './testSetup.js';
 
 describe('Restaurant Endpoints', () => {
+    let testUsers: TestUsers;
 
     before(async () => {
-        try {
-            // Use test database connection with a dedicated test DB name
-            const mongoUri = process.env.MONGO_DB || process.env.MONGO_URI;
-            console.log('🔍 Environment MONGO_DB:', mongoUri);
-
-            if (!mongoUri) {
-                throw new Error('Please set MONGO_DB or MONGO_URI in .env file');
-            }
-
-            // Connect with test database name
-            const testUri = mongoUri.includes('mongodb+srv')
-                ? mongoUri.replace(/\/[^/?]*\?/, '/foodexpress_test?')  // Atlas: replace DB name
-                : mongoUri.replace(/\/[^/?]*$/, '/foodexpress_test');   // Local: replace DB name
-
-            console.log('🔗 Connecting to:', testUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')); // Hide credentials
-
-            // Set connection timeout
-            await mongoose.connect(testUri, {
-                serverSelectionTimeoutMS: 10000, // 10 second timeout
-                connectTimeoutMS: 10000,
-            });
-            console.log('✅ Connected to test database');
-        } catch (error) {
-            console.error('❌ Database connection failed:', error);
-            throw error;
-        }
+        await setupTestDatabase();
+        testUsers = await createTestUsers();
     });
 
     afterEach(async () => {
         await Restaurant.deleteMany({});
-        await User.deleteMany({});
     });
 
     after(async () => {
-        await mongoose.connection.close();
+        await teardownTestDatabase();
     });
 
     const mockRestaurant = {
         name: 'Test Restaurant',
         address: '123 Test Street',
-        phone: '555-0123',
+        phone: '+15550123',
         opening_hours: '9am - 9pm'
     };
 
@@ -167,11 +141,11 @@ describe('Restaurant Endpoints', () => {
             expect(res.body).to.have.property('opening_hours', '10am - 10pm');
         });
 
-        it('should return 500 for invalid restaurant id format', async () => {
+        it('should return 400 for invalid restaurant id format', async () => {
             const res = await request(app)
                 .get('/api/restaurants/invalid-id');
 
-            expect(res.status).to.equal(500); // MongoDB throws error for invalid ObjectId
+            expect(res.status).to.equal(400);
         });
 
         it('should return 404 for non-existent restaurant', async () => {
@@ -185,53 +159,12 @@ describe('Restaurant Endpoints', () => {
     });
 
     describe('POST /api/restaurants', () => {
-        let adminToken: string;
-        let userToken: string;
-
-        beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-        });
-
         it('should create a new restaurant as admin', async () => {
             const newRestaurant = generateRandomRestaurant();
 
             const res = await request(app)
                 .post('/api/restaurants')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(newRestaurant);
 
             expect(res.status).to.equal(201);
@@ -243,7 +176,7 @@ describe('Restaurant Endpoints', () => {
         it('should not create restaurant with existing name', async () => {
             const res = await request(app)
                 .post('/api/restaurants')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(mockRestaurant);
 
             expect(res.status).to.equal(400);
@@ -259,11 +192,11 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/restaurants')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(incompleteRestaurant);
 
             expect(res.status).to.equal(400);
-            expect(res.body.message).to.equal('Name, address phone and opening_hours are required');
+            expect(res.body.message).to.equal('All fields (name, address, phone, opening_hours) are required');
         });
 
         it('should not create restaurant as regular user', async () => {
@@ -271,7 +204,7 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/restaurants')
-                .set('Authorization', `Bearer ${userToken}`)
+                .set('Authorization', `Bearer ${testUsers.userToken}`)
                 .send(newRestaurant);
 
             expect(res.status).to.equal(403);
@@ -289,47 +222,9 @@ describe('Restaurant Endpoints', () => {
     });
 
     describe('PUT /api/restaurants/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let testRestaurant: any;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-
             // Create a test restaurant to update
             const newRestaurant = generateRandomRestaurant();
             testRestaurant = await Restaurant.create(newRestaurant);
@@ -344,7 +239,7 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(updatedData);
 
             expect(res.status).to.equal(200);
@@ -360,7 +255,7 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ phone: updatedPhone });
 
             expect(res.status).to.equal(200);
@@ -371,7 +266,7 @@ describe('Restaurant Endpoints', () => {
         it('should not update to existing name', async () => {
             const res = await request(app)
                 .put(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ name: mockRestaurant.name });
 
             expect(res.status).to.equal(400);
@@ -383,7 +278,7 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${userToken}`)
+                .set('Authorization', `Bearer ${testUsers.userToken}`)
                 .send(updatedData);
 
             expect(res.status).to.equal(403);
@@ -399,13 +294,13 @@ describe('Restaurant Endpoints', () => {
             expect(res.status).to.equal(401);
         });
 
-        it('should return 500 for invalid restaurant ID', async () => {
+        it('should return 400 for invalid restaurant ID', async () => {
             const res = await request(app)
                 .put('/api/restaurants/invalid-id')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ name: 'Test' });
 
-            expect(res.status).to.equal(500);
+            expect(res.status).to.equal(400);
         });
 
         it('should return 404 for non-existent restaurant', async () => {
@@ -413,7 +308,7 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/restaurants/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ name: 'Test' });
 
             expect(res.status).to.equal(404);
@@ -422,47 +317,9 @@ describe('Restaurant Endpoints', () => {
     });
 
     describe('DELETE /api/restaurants/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let testRestaurant: any;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-
             // Create a test restaurant to delete
             const newRestaurant = generateRandomRestaurant();
             testRestaurant = await Restaurant.create(newRestaurant);
@@ -471,7 +328,7 @@ describe('Restaurant Endpoints', () => {
         it('should delete restaurant as admin', async () => {
             const res = await request(app)
                 .delete(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(200);
             expect(res.body).to.have.property('message', 'Restaurant deleted successfully');
@@ -484,7 +341,7 @@ describe('Restaurant Endpoints', () => {
         it('should not delete restaurant as regular user', async () => {
             const res = await request(app)
                 .delete(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${userToken}`);
+                .set('Authorization', `Bearer ${testUsers.userToken}`);
 
             expect(res.status).to.equal(403);
 
@@ -504,12 +361,12 @@ describe('Restaurant Endpoints', () => {
             expect(stillExists).to.not.be.null;
         });
 
-        it('should return 500 for invalid restaurant ID', async () => {
+        it('should return 400 for invalid restaurant ID', async () => {
             const res = await request(app)
                 .delete('/api/restaurants/invalid-id')
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
-            expect(res.status).to.equal(500);
+            expect(res.status).to.equal(400);
         });
 
         it('should return 404 for non-existent restaurant', async () => {
@@ -517,7 +374,7 @@ describe('Restaurant Endpoints', () => {
 
             const res = await request(app)
                 .delete(`/api/restaurants/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(404);
             expect(res.body.message).to.equal('Restaurant not found');
@@ -527,12 +384,12 @@ describe('Restaurant Endpoints', () => {
             // First delete
             await request(app)
                 .delete(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             // Try to delete again
             const res = await request(app)
                 .delete(`/api/restaurants/${testRestaurant._id}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(404);
             expect(res.body.message).to.equal('Restaurant not found');

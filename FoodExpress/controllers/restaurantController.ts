@@ -6,6 +6,7 @@ import {IRestaurant, Restaurant} from '../schema/restaurants.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -91,6 +92,12 @@ class RestaurantController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
+            
+            // Validate ObjectId format early
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return next(new BadRequest('Invalid restaurant ID format'));
+            }
+            
             const restaurant = await this.service.getById(id);
             if (!restaurant) return next(new NotFound('Restaurant not found'));
 
@@ -104,6 +111,11 @@ class RestaurantController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
+
+            // Validate ObjectId format early
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return next(new BadRequest('Invalid restaurant ID format'));
+            }
 
             const { name, address, phone, opening_hours } = req.body;
 
@@ -139,6 +151,11 @@ class RestaurantController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
+
+            // Validate ObjectId format early
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return next(new BadRequest('Invalid restaurant ID format'));
+            }
 
             const deletedRestaurant = await this.service.delete(id);
             if (!deletedRestaurant) return next(new NotFound('Restaurant not found'));

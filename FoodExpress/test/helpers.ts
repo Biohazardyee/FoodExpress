@@ -90,10 +90,11 @@ function generateRandomAddress() {
 }
 
 function generateRandomPhone() {
-  const area = Math.floor(Math.random() * 900) + 100;
-  const exchange = Math.floor(Math.random() * 900) + 100;
-  const number = Math.floor(Math.random() * 9000) + 1000;
-  return `${area}-${exchange}-${number}`;
+  // Generate E.164 format phone numbers for validation
+  const countryCode = Math.floor(Math.random() * 9) + 1; // 1-9
+  const areaCode = Math.floor(Math.random() * 900) + 100; // 100-999
+  const number = Math.floor(Math.random() * 9000000) + 1000000; // 1000000-9999999
+  return `+${countryCode}${areaCode}${number}`;
 }
 
 function generateRandomOpeningHours() {

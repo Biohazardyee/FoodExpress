@@ -5,54 +5,32 @@ import { User } from '../schema/users.js';
 import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
 import { generateRandomEmail, generateRandomPassword, generateRandomUsername } from './helpers.js';
-import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
-
-// Load environment variables
-dotenv.config();
+import { setupTestDatabase, teardownTestDatabase, createTestUsers } from './testSetup.js';
+import type { TestUsers } from './testSetup.js';
 
 describe('User Endpoints', () => {
+    let testUsers: TestUsers;
 
     before(async () => {
-        try {
-            // Use test database connection with a dedicated test DB name
-            const mongoUri = process.env.MONGO_DB || process.env.MONGO_URI;
-            console.log('🔍 Environment MONGO_DB:', mongoUri);
-
-            if (!mongoUri) {
-                throw new Error('Please set MONGO_DB or MONGO_URI in .env file');
-            }
-
-            // Connect with test database name
-            const testUri = mongoUri.includes('mongodb+srv')
-                ? mongoUri.replace(/\/[^/?]*\?/, '/foodexpress_test?')  // Atlas: replace DB name
-                : mongoUri.replace(/\/[^/?]*$/, '/foodexpress_test');   // Local: replace DB name
-
-            console.log('🔗 Connecting to:', testUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')); // Hide credentials
-
-            // Set connection timeout
-            await mongoose.connect(testUri, {
-                serverSelectionTimeoutMS: 10000, // 10 second timeout
-                connectTimeoutMS: 10000,
-            });
-            console.log('✅ Connected to test database');
-        } catch (error) {
-            console.error('❌ Database connection failed:', error);
-            throw error;
-        }
+        await setupTestDatabase();
+        testUsers = await createTestUsers();
     });
 
     afterEach(async () => {
-        await User.deleteMany({});
+        // Clean up test users silently (keep shared test users)
+        await User.deleteMany({
+            email: { $nin: ['testadmin@example.com', 'testuser@example.com'] }
+        });
     });
 
     after(async () => {
-        await mongoose.connection.close();
+        await teardownTestDatabase();
     });
 
     const mockUser = {
         email: 'test@example.com',
-        username: 'testuser',
+        username: 'mocktestuser',
         password: 'testpassword'
     };
 
@@ -352,51 +330,10 @@ describe('User Endpoints', () => {
     });
 
     describe('GET /api/users', () => {
-        let adminToken: string;
-        let userToken: string;
-
-        beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            const adminUser = await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            const regularUser = await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-        });
-
         it('should get all users as admin', async () => {
             const res = await request(app)
                 .get('/api/users')
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(200);
             expect(res.body).to.be.an('array');
@@ -406,7 +343,7 @@ describe('User Endpoints', () => {
         it('should not get all users as regular user', async () => {
             const res = await request(app)
                 .get('/api/users')
-                .set('Authorization', `Bearer ${userToken}`);
+                .set('Authorization', `Bearer ${testUsers.userToken}`);
 
             expect(res.status).to.equal(403);
         });
@@ -428,64 +365,26 @@ describe('User Endpoints', () => {
     });
 
     describe('GET /api/users/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let userId: string;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            const adminUser = await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            const regularUser = await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            userId = regularUser._id.toString();
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
+            userId = testUsers.regularUser._id.toString();
         });
 
         it('should get user by id as admin', async () => {
             const res = await request(app)
                 .get(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(200);
-            expect(res.body).to.have.property('email', 'user@example.com');
-            expect(res.body).to.have.property('username', 'regularuser');
+            expect(res.body).to.have.property('email', 'testuser@example.com');
+            expect(res.body).to.have.property('username', 'testuser');
         });
 
         it('should not get user by id as regular user', async () => {
             const res = await request(app)
                 .get(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${userToken}`);
+                .set('Authorization', `Bearer ${testUsers.userToken}`);
 
             expect(res.status).to.equal(403);
         });
@@ -500,7 +399,7 @@ describe('User Endpoints', () => {
         it('should return 400 for invalid user id format', async () => {
             const res = await request(app)
                 .get('/api/users/invalid-id')
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(400);
             expect(res.body.message).to.equal('Invalid ID format');
@@ -510,62 +409,44 @@ describe('User Endpoints', () => {
             const nonExistentId = '507f1f77bcf86cd799439011'; // Valid ObjectId format but doesn't exist
             const res = await request(app)
                 .get(`/api/users/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(404);
         });
     });
 
     describe('PUT /api/users/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let userId: string;
+        let userToken: string;
         let adminId: string;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            const adminUser = await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-            adminId = adminUser._id.toString();
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            const regularUser = await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
+            // Create a dedicated test user for update operations
+            const hashedPassword = await bcrypt.hash('UpdateTest123!', 10);
+            const testUser = await User.create({
+                email: 'updatetest@example.com',
+                username: 'updatetestuser',
+                password: hashedPassword,
                 roles: ['user']
             });
-            userId = regularUser._id.toString();
+            userId = testUser._id.toString();
 
-            // Get admin token
-            const adminLoginRes = await request(app)
+            // Login to get token for this test user
+            const loginRes = await request(app)
                 .post('/api/users/login')
                 .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
+                    email: 'updatetest@example.com',
+                    password: 'UpdateTest123!'
                 });
-            adminToken = adminLoginRes.body.token;
+            userToken = loginRes.body.token;
 
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
+            adminId = testUsers.adminUser._id.toString();
         });
 
         it('should update user as admin', async () => {
             const res = await request(app)
                 .put(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({
                     username: 'updatedusername',
                     email: 'updated@example.com'
@@ -589,12 +470,12 @@ describe('User Endpoints', () => {
             expect(res.body.user).to.have.property('username', 'updatedbyuser');
         });
 
-        it('should not update other user profile as regular user', async () => {
+        it('should not delete other user profile as regular user', async () => {
             const res = await request(app)
-                .put(`/api/users/${adminId}`)
+                .delete(`/api/users/${adminId}`)
                 .set('Authorization', `Bearer ${userToken}`)
                 .send({
-                    username: 'attemptedupdate'
+                    username: 'attempteddelete'
                 });
 
             expect(res.status).to.equal(403);
@@ -613,7 +494,7 @@ describe('User Endpoints', () => {
         it('should not update with invalid email format', async () => {
             const res = await request(app)
                 .put(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({
                     email: 'invalid-email'
                 });
@@ -625,7 +506,7 @@ describe('User Endpoints', () => {
         it('should not update with short password', async () => {
             const res = await request(app)
                 .put(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({
                     password: 'short'
                 });
@@ -637,7 +518,7 @@ describe('User Endpoints', () => {
         it('should not update with invalid username', async () => {
             const res = await request(app)
                 .put(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({
                     username: 'ab' // too short
                 });
@@ -649,7 +530,7 @@ describe('User Endpoints', () => {
         it('should not update with empty request body', async () => {
             const res = await request(app)
                 .put(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({});
 
             expect(res.status).to.equal(400);
@@ -660,7 +541,7 @@ describe('User Endpoints', () => {
             const nonExistentId = '507f1f77bcf86cd799439011';
             const res = await request(app)
                 .put(`/api/users/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({
                     username: 'newusername'
                 });
@@ -670,55 +551,37 @@ describe('User Endpoints', () => {
     });
 
     describe('DELETE /api/users/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let userId: string;
+        let userToken: string;
         let adminId: string;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            const adminUser = await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-            adminId = adminUser._id.toString();
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            const regularUser = await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
+            // Create a dedicated test user for delete operations
+            const hashedPassword = await bcrypt.hash('DeleteTest123!', 10);
+            const testUser = await User.create({
+                email: 'deletetest@example.com',
+                username: 'deletetestuser',
+                password: hashedPassword,
                 roles: ['user']
             });
-            userId = regularUser._id.toString();
+            userId = testUser._id.toString();
 
-            // Get admin token
-            const adminLoginRes = await request(app)
+            // Login to get token for this test user
+            const loginRes = await request(app)
                 .post('/api/users/login')
                 .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
+                    email: 'deletetest@example.com',
+                    password: 'DeleteTest123!'
                 });
-            adminToken = adminLoginRes.body.token;
+            userToken = loginRes.body.token;
 
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
+            adminId = testUsers.adminUser._id.toString();
         });
 
         it('should delete user as admin', async () => {
             const res = await request(app)
                 .delete(`/api/users/${userId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(200);
             expect(res.body).to.have.property('message', 'User deleted successfully');
@@ -736,7 +599,7 @@ describe('User Endpoints', () => {
         it('should not delete other user profile as regular user', async () => {
             const res = await request(app)
                 .delete(`/api/users/${adminId}`)
-                .set('Authorization', `Bearer ${userToken}`);
+                .set('Authorization', `Bearer ${testUsers.userToken}`);
 
             expect(res.status).to.equal(403);
         });
@@ -752,7 +615,7 @@ describe('User Endpoints', () => {
             const nonExistentId = '507f1f77bcf86cd799439011';
             const res = await request(app)
                 .delete(`/api/users/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(404);
         });
@@ -760,7 +623,7 @@ describe('User Endpoints', () => {
         it('should return 400 for invalid user id format', async () => {
             const res = await request(app)
                 .delete('/api/users/invalid-id')
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(400);
             expect(res.body.message).to.equal('Invalid ID format');

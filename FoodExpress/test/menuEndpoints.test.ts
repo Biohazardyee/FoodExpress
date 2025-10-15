@@ -16,33 +16,21 @@ import {
     clearTestDb,
     disconnectTestDb
 } from './helpers.js';
-import dotenv from 'dotenv';
-import bcrypt from 'bcrypt';
-
-// Load environment variables
-dotenv.config();
+import { setupTestDatabase, teardownTestDatabase, createTestUsers } from './testSetup.js';
+import type { TestUsers } from './testSetup.js';
 
 describe('Menu Endpoints', () => {
     let mockRestaurant: any;
     let mockMenu: any;
+    let testUsers: TestUsers;
 
     before(async () => {
-        const mongoUri = process.env.MONGO_DB;
-        console.log('🔍 Environment MONGO_DB:', mongoUri);
-
-        if (!mongoUri) {
-            throw new Error('MONGO_DB environment variable is required');
-        }
-
-        const maskedUri = mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
-        console.log('🔗 Connecting to:', maskedUri);
-
-        await mongoose.connect(mongoUri);
-        console.log('✅ Connected to test database');
+        await setupTestDatabase();
+        testUsers = await createTestUsers();
     });
 
     after(async () => {
-        await disconnectTestDb();
+        await teardownTestDatabase();
     });
 
     afterEach(async () => {
@@ -234,53 +222,12 @@ describe('Menu Endpoints', () => {
     });
 
     describe('POST /api/menus', () => {
-        let adminToken: string;
-        let userToken: string;
-
-        beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-        });
-
         it('should create a new menu as admin', async () => {
             const newMenu = generateRandomMenu(mockRestaurant._id.toString());
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(newMenu);
 
             expect(res.status).to.equal(201);
@@ -299,7 +246,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(minimalMenu);
 
             expect(res.status).to.equal(201);
@@ -318,7 +265,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(fullMenu);
 
             expect(res.status).to.equal(201);
@@ -334,11 +281,11 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(invalidMenu);
 
             expect(res.status).to.equal(400);
-            expect(res.body.message).to.equal('Title, price and restaurant are required');
+            expect(res.body.message).to.equal('Name, price and restaurantId are required');
         });
 
         it('should not create menu with missing price', async () => {
@@ -349,11 +296,11 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(invalidMenu);
 
             expect(res.status).to.equal(400);
-            expect(res.body.message).to.equal('Title, price and restaurant are required');
+            expect(res.body.message).to.equal('Name, price and restaurantId are required');
         });
 
         it('should not create menu with missing restaurantId', async () => {
@@ -364,11 +311,11 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(invalidMenu);
 
             expect(res.status).to.equal(400);
-            expect(res.body.message).to.equal('Title, price and restaurant are required');
+            expect(res.body.message).to.equal('Name, price and restaurantId are required');
         });
 
         it('should not create menu with non-existent restaurant', async () => {
@@ -380,7 +327,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(invalidMenu);
 
             expect(res.status).to.equal(404);
@@ -392,7 +339,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .post('/api/menus')
-                .set('Authorization', `Bearer ${userToken}`)
+                .set('Authorization', `Bearer ${testUsers.userToken}`)
                 .send(newMenu);
 
             expect(res.status).to.equal(403);
@@ -410,47 +357,9 @@ describe('Menu Endpoints', () => {
     });
 
     describe('PUT /api/menus/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let testMenu: any;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-
             // Create a test menu to update
             const newMenu = generateRandomMenu(mockRestaurant._id.toString());
             testMenu = await Menu.create(newMenu);
@@ -466,7 +375,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send(updatedData);
 
             expect(res.status).to.equal(200);
@@ -484,7 +393,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ price: updatedPrice });
 
             expect(res.status).to.equal(200);
@@ -497,7 +406,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${userToken}`)
+                .set('Authorization', `Bearer ${testUsers.userToken}`)
                 .send(updatedData);
 
             expect(res.status).to.equal(403);
@@ -516,7 +425,7 @@ describe('Menu Endpoints', () => {
         it('should return 500 for invalid menu ID', async () => {
             const res = await request(app)
                 .put('/api/menus/invalid-id')
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ name: 'Test' });
 
             expect(res.status).to.equal(500);
@@ -527,7 +436,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .put(`/api/menus/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({ name: 'Test' });
 
             expect(res.status).to.equal(404);
@@ -536,47 +445,9 @@ describe('Menu Endpoints', () => {
     });
 
     describe('DELETE /api/menus/:id', () => {
-        let adminToken: string;
-        let userToken: string;
         let testMenu: any;
 
         beforeEach(async () => {
-            // Create admin user
-            const hashedAdminPassword = await bcrypt.hash('adminpassword', 10);
-            await User.create({
-                email: 'admin@example.com',
-                username: 'admin',
-                password: hashedAdminPassword,
-                roles: ['admin']
-            });
-
-            // Create regular user
-            const hashedUserPassword = await bcrypt.hash('userpassword', 10);
-            await User.create({
-                email: 'user@example.com',
-                username: 'regularuser',
-                password: hashedUserPassword,
-                roles: ['user']
-            });
-
-            // Get admin token
-            const adminLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'admin@example.com',
-                    password: 'adminpassword'
-                });
-            adminToken = adminLoginRes.body.token;
-
-            // Get user token
-            const userLoginRes = await request(app)
-                .post('/api/users/login')
-                .send({
-                    email: 'user@example.com',
-                    password: 'userpassword'
-                });
-            userToken = userLoginRes.body.token;
-
             // Create a test menu to delete
             const newMenu = generateRandomMenu(mockRestaurant._id.toString());
             testMenu = await Menu.create(newMenu);
@@ -585,7 +456,7 @@ describe('Menu Endpoints', () => {
         it('should delete menu as admin', async () => {
             const res = await request(app)
                 .delete(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(200);
             expect(res.body).to.have.property('message', 'Menu deleted successfully');
@@ -598,7 +469,7 @@ describe('Menu Endpoints', () => {
         it('should not delete menu as regular user', async () => {
             const res = await request(app)
                 .delete(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${userToken}`);
+                .set('Authorization', `Bearer ${testUsers.userToken}`);
 
             expect(res.status).to.equal(403);
 
@@ -621,7 +492,7 @@ describe('Menu Endpoints', () => {
         it('should return 500 for invalid menu ID', async () => {
             const res = await request(app)
                 .delete('/api/menus/invalid-id')
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(500);
         });
@@ -631,7 +502,7 @@ describe('Menu Endpoints', () => {
 
             const res = await request(app)
                 .delete(`/api/menus/${nonExistentId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(404);
             expect(res.body.message).to.equal('Menu not found');
@@ -641,12 +512,12 @@ describe('Menu Endpoints', () => {
             // First delete
             await request(app)
                 .delete(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             // Try to delete again
             const res = await request(app)
                 .delete(`/api/menus/${testMenu._id}`)
-                .set('Authorization', `Bearer ${adminToken}`);
+                .set('Authorization', `Bearer ${testUsers.adminToken}`);
 
             expect(res.status).to.equal(404);
             expect(res.body.message).to.equal('Menu not found');

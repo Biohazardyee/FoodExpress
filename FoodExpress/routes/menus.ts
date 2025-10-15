@@ -2,6 +2,7 @@ import express from 'express';
 import menuController from '../controllers/menuController.js';
 import { authGuard } from '../middlewares/authMiddleware.js';
 import { checkAdmin } from '../middlewares/checkAdmin.js';
+import { validateMenuCreation, validateMenuUpdate } from '../middlewares/menuInputValidation.js';
 
 const router = express.Router();
 
@@ -15,8 +16,8 @@ router.get('/by-restaurant/:restaurantId', (req, res, next) =>
 );
 
 // Admin-only routes
-router.post('/', authGuard, checkAdmin, (req, res, next) => menuController.add(req, res, next));
-router.put('/:id', authGuard, checkAdmin, (req, res, next) => menuController.update(req, res, next));
+router.post('/', authGuard, checkAdmin, validateMenuCreation, (req, res, next) => menuController.add(req, res, next));
+router.put('/:id', authGuard, checkAdmin, validateMenuUpdate, (req, res, next) => menuController.update(req, res, next));
 router.delete('/:id', authGuard, checkAdmin, (req, res, next) => menuController.delete(req, res, next));
 
 export default router;

@@ -1,6 +1,7 @@
 import { Service } from './service.js';
 import { Restaurant, IRestaurant } from '../schema/restaurants.js';
-import { NotFound } from '../utils/errors.js';
+import { NotFound, BadRequest } from '../utils/errors.js';
+import mongoose from 'mongoose';
 
 class RestaurantService extends Service<IRestaurant, string> {
     async add(data: IRestaurant): Promise<IRestaurant> {
@@ -13,6 +14,11 @@ class RestaurantService extends Service<IRestaurant, string> {
     }
 
     async getById(id: string): Promise<IRestaurant> {
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new BadRequest('Invalid restaurant ID format');
+        }
+        
         const restaurant = await Restaurant.findById(id);
         if (!restaurant) {
             throw new NotFound('Restaurant not found');
@@ -27,12 +33,22 @@ class RestaurantService extends Service<IRestaurant, string> {
     }
 
     async update(id: string, patch: Partial<IRestaurant>): Promise<IRestaurant> {
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new BadRequest('Invalid restaurant ID format');
+        }
+        
         const updatedRestaurant = await Restaurant.findByIdAndUpdate(id, patch, { new: true });
         if (!updatedRestaurant) throw new NotFound('Restaurant not found');
         return updatedRestaurant;
     }
 
     async delete(id: string): Promise<IRestaurant> {
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new BadRequest('Invalid restaurant ID format');
+        }
+        
         const deletedRestaurant = await Restaurant.findByIdAndDelete(id);
         if (!deletedRestaurant) {
             throw new NotFound('Restaurant not found');
