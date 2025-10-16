@@ -29,6 +29,13 @@ class MenuService extends Service<IMenu, string> {
         });
     }
 
+    async findByRestaurantAndName(restaurantId: string, name: string): Promise<IMenu | null> {
+        return Menu.findOne({
+            restaurantId: new mongoose.Types.ObjectId(restaurantId),
+            name: name
+        });
+    }
+
     async update(id: string, patch: Partial<IMenu>): Promise<IMenu> {
         const updatedMenu = await Menu.findByIdAndUpdate(id, patch, { new: true });
         if (!updatedMenu) throw new NotFound('Menu not found');

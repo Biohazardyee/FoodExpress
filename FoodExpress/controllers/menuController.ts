@@ -25,6 +25,12 @@ class MenuController extends Controller {
                 throw new BadRequest('Restaurant does not exist');
             }
 
+            // Check if menu with same name already exists for this restaurant
+            const existingMenu = await this.service.findByRestaurantAndName(restaurantId, name);
+            if (existingMenu) {
+                throw new BadRequest('A menu with this name already exists for this restaurant');
+            }
+
             const newMenuData: Partial<IMenu> = {
                 name,
                 price,
@@ -122,6 +128,22 @@ class MenuController extends Controller {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
             const { name, description, price, restaurantId, category } = req.body;
+            
+            // Get the current menu to check its restaurant
+            const currentMenu = await this.service.getById(id);
+            if (!currentMenu) return next(new NotFound('Menu not found'));
+
+            // If updating name, check for duplicates in the same restaurant
+            if (name) {
+                const targetRestaurantId = restaurantId || currentMenu.restaurantId.toString();
+                const existingMenu = await this.service.findByRestaurantAndName(targetRestaurantId, name);
+                
+                // If a menu with this name exists and it's not the current menu being updated
+                if (existingMenu && existingMenu._id.toString() !== id) {
+                    throw new BadRequest('A menu with this name already exists for this restaurant');
+                }
+            }
+
             const patch: Partial<IMenu> = {};
 
             if (name) patch.name = name;

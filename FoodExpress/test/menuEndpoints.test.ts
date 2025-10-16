@@ -354,6 +354,78 @@ describe('Menu Endpoints', () => {
 
             expect(res.status).to.equal(401);
         });
+
+        it('should not create menu with duplicate name for same restaurant', async () => {
+            // First, create a menu
+            const firstMenu = {
+                name: 'Unique Menu Name',
+                price: generateRandomMenuPrice(),
+                restaurantId: mockRestaurant._id.toString()
+            };
+
+            const res1 = await request(app)
+                .post('/api/menus')
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
+                .send(firstMenu);
+
+            expect(res1.status).to.equal(201);
+
+            // Try to create another menu with the same name for the same restaurant
+            const duplicateMenu = {
+                name: 'Unique Menu Name',
+                price: generateRandomMenuPrice(),
+                restaurantId: mockRestaurant._id.toString()
+            };
+
+            const res2 = await request(app)
+                .post('/api/menus')
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
+                .send(duplicateMenu);
+
+            expect(res2.status).to.equal(400);
+            expect(res2.body.message).to.equal('A menu with this name already exists for this restaurant');
+        });
+
+        it('should allow same menu name in different restaurants', async () => {
+            // Create a second restaurant
+            const secondRestaurant = await Restaurant.create({
+                name: 'Second Restaurant',
+                address: '456 Second St',
+                phone: '+33123456789',
+                opening_hours: '10:00-22:00'
+            });
+
+            const sameName = 'Shared Menu Name';
+
+            // Create menu in first restaurant
+            const menu1 = {
+                name: sameName,
+                price: generateRandomMenuPrice(),
+                restaurantId: mockRestaurant._id.toString()
+            };
+
+            const res1 = await request(app)
+                .post('/api/menus')
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
+                .send(menu1);
+
+            expect(res1.status).to.equal(201);
+
+            // Create menu with same name in second restaurant
+            const menu2 = {
+                name: sameName,
+                price: generateRandomMenuPrice(),
+                restaurantId: secondRestaurant._id.toString()
+            };
+
+            const res2 = await request(app)
+                .post('/api/menus')
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
+                .send(menu2);
+
+            expect(res2.status).to.equal(201);
+            expect(res2.body.menu).to.have.property('name', sameName);
+        });
     });
 
     describe('PUT /api/menus/:id', () => {
@@ -441,6 +513,40 @@ describe('Menu Endpoints', () => {
 
             expect(res.status).to.equal(404);
             expect(res.body.message).to.equal('Menu not found');
+        });
+
+        it('should not update menu to duplicate name in same restaurant', async () => {
+            // Create a second menu in the same restaurant
+            const secondMenu = await Menu.create({
+                name: 'Existing Menu',
+                price: generateRandomMenuPrice(),
+                restaurantId: mockRestaurant._id
+            });
+
+            // Try to update testMenu to have the same name as secondMenu
+            const res = await request(app)
+                .put(`/api/menus/${testMenu._id}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
+                .send({ name: 'Existing Menu' });
+
+            expect(res.status).to.equal(400);
+            expect(res.body.message).to.equal('A menu with this name already exists for this restaurant');
+        });
+
+        it('should allow updating menu to same name (no change)', async () => {
+            const originalName = testMenu.name;
+
+            const res = await request(app)
+                .put(`/api/menus/${testMenu._id}`)
+                .set('Authorization', `Bearer ${testUsers.adminToken}`)
+                .send({ 
+                    name: originalName,
+                    price: 99.99 
+                });
+
+            expect(res.status).to.equal(200);
+            expect(res.body.menu).to.have.property('name', originalName);
+            expect(res.body.menu).to.have.property('price', 99.99);
         });
     });
 

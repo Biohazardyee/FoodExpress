@@ -51,40 +51,62 @@ app.use(function (req, res, next) {
 // Database connection is handled by bin/www.ts for the server
 // and by test files for testing
 
-// error handler
-app.use(function (err: any, _req: any, res: any, _next: any) {
+// Centralized error handler
+app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
     let status = 500;
     let message = 'Internal Server Error';
-
+    
+    // Handle custom API errors
     if (err instanceof ApiError) {
         status = err.status;
         message = err.message;
-    } else if (err instanceof SyntaxError) {
+    } 
+    // Handle JSON parsing errors
+    else if (err instanceof SyntaxError && 'body' in err) {
         status = 400;
         message = 'Invalid JSON payload';
-    } else {
-        err = new InternalError();
+    }
+    // Handle 404 errors from createError
+    else if (err.status === 404) {
+        status = 404;
+        message = err.message || 'Not Found';
+    }
+    // Handle other errors
+    else if (err.message) {
+        message = err.message;
     }
 
-    res.status(status)
-        .json({
-            error: status,
-            message
-        });
-});
-
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error("ERROR:", err.message);
-    console.error("Stacktrace:\n", err.stack); // 👈 ici
-
-    if (req.app.get("env") === "development") {
-        return res.status(err.status || 500).json({
-            message: err.message,
-            stack: err.stack,
-        });
+    // Log error to console for debugging (skip in test environment to keep output clean)
+    if (process.env.NODE_ENV !== 'test') {
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error(`❌ Error ${status}: ${message}`);
+        console.error(`📍 ${req.method} ${req.originalUrl}`);
+        if (req.body && Object.keys(req.body).length > 0) {
+            console.error('📦 Request Body:', JSON.stringify(req.body, null, 2));
+        }
+        console.error('🔍 Stack Trace:');
+        console.error(err.stack || 'No stack trace available');
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }
 
-    res.status(err.status || 500).json({ message: "Internal server error" });
+    // Build response object
+    const errorResponse: any = {
+        error: status,
+        message: message
+    };
+
+    // In development mode, include stack trace in response
+    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production';
+    if (isDevelopment && err.stack) {
+        errorResponse.stack = err.stack;
+        errorResponse.details = {
+            method: req.method,
+            path: req.originalUrl,
+            body: req.body
+        };
+    }
+
+    res.status(status).json(errorResponse);
 });
 
 export default app;
