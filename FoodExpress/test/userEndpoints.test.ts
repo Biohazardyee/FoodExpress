@@ -381,9 +381,20 @@ describe('User Endpoints', () => {
             expect(res.body).to.have.property('username', 'testuser');
         });
 
-        it('should not get user by id as regular user', async () => {
+        it('should allow regular user to get their own profile', async () => {
             const res = await request(app)
                 .get(`/api/users/${userId}`)
+                .set('Authorization', `Bearer ${testUsers.userToken}`);
+
+            expect(res.status).to.equal(200);
+            expect(res.body).to.have.property('email', 'testuser@example.com');
+            expect(res.body).to.have.property('username', 'testuser');
+        });
+
+        it('should not allow regular user to get another user\'s profile', async () => {
+            const adminId = testUsers.adminUser._id.toString();
+            const res = await request(app)
+                .get(`/api/users/${adminId}`)
                 .set('Authorization', `Bearer ${testUsers.userToken}`);
 
             expect(res.status).to.equal(403);

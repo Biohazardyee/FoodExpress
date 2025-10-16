@@ -37,7 +37,9 @@ router.put('/:id', authGuard, checkAdminOrSelf,
 router.get('/', authGuard, checkAdmin,
     (req, res, next) => userController.getAll(req, res, next));
 
-router.get('/:id', authGuard, checkAdmin,
+// Regular users can get their own profile
+// Admin can get any profile
+router.get('/:id', authGuard, checkAdminOrSelf,
     (req, res, next) => userController.getById(req, res, next));
 
 export default router;
