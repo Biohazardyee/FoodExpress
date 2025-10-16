@@ -13,10 +13,10 @@ import {
     generateRandomMenuPrice,
     generateRandomMenuCategory,
     generateRandomRestaurant,
-    clearTestDb,
+    clearTestCreatedItems,
     disconnectTestDb
 } from './helpers.js';
-import { setupTestDatabase, teardownTestDatabase, createTestUsers } from './testSetup.js';
+import { setupTestDatabase, teardownTestDatabase, createTestUsers, trackMenu, trackRestaurant, finalCleanup } from './testSetup.js';
 import type { TestUsers } from './testSetup.js';
 
 describe('Menu Endpoints', () => {
@@ -30,21 +30,24 @@ describe('Menu Endpoints', () => {
     });
 
     after(async () => {
+        await finalCleanup(); // Final cleanup of any remaining tracked items
         await teardownTestDatabase();
     });
 
     afterEach(async () => {
-        await clearTestDb();
+        await clearTestCreatedItems();
     });
 
     beforeEach(async () => {
         // Create a test restaurant first since menus require a restaurant
         const restaurantData = generateRandomRestaurant();
         mockRestaurant = await Restaurant.create(restaurantData);
+        trackRestaurant(mockRestaurant._id.toString());
 
         // Create a test menu
         const menuData = generateRandomMenu(mockRestaurant._id.toString());
         mockMenu = await Menu.create(menuData);
+        trackMenu(mockMenu._id.toString());
     });
 
     describe('GET /api/menus', () => {
@@ -54,7 +57,7 @@ describe('Menu Endpoints', () => {
 
             expect(res.status).to.equal(200);
             expect(res.body).to.be.an('array');
-            expect(res.body).to.have.length(1);
+            expect(res.body.length).to.be.greaterThan(0); // At least the one we created
             expect(res.body[0]).to.have.property('name');
             expect(res.body[0]).to.have.property('price');
             expect(res.body[0]).to.have.property('restaurantId');
@@ -78,7 +81,8 @@ describe('Menu Endpoints', () => {
                 const menuData = generateRandomMenu(mockRestaurant._id.toString());
                 additionalMenus.push(menuData);
             }
-            await Menu.create(additionalMenus);
+            const created = await Menu.create(additionalMenus);
+            created.forEach(menu => trackMenu(menu._id.toString()));
 
             const res = await request(app)
                 .get('/api/menus?page=1&limit=3');
@@ -106,11 +110,12 @@ describe('Menu Endpoints', () => {
 
         it('should support sorting by category ascending', async () => {
             // Create menus with different categories
-            await Menu.create([
+            const created = await Menu.create([
                 { ...generateRandomMenu(mockRestaurant._id.toString()), category: 'Dessert' },
                 { ...generateRandomMenu(mockRestaurant._id.toString()), category: 'Appetizer' },
                 { ...generateRandomMenu(mockRestaurant._id.toString()), category: 'Main Course' }
             ]);
+            created.forEach(menu => trackMenu(menu._id.toString()));
 
             const res = await request(app)
                 .get('/api/menus?sort=category:asc');
@@ -122,11 +127,12 @@ describe('Menu Endpoints', () => {
 
         it('should support sorting by price descending', async () => {
             // Create menus with different prices
-            await Menu.create([
+            const created = await Menu.create([
                 { ...generateRandomMenu(mockRestaurant._id.toString()), price: 15.99 },
                 { ...generateRandomMenu(mockRestaurant._id.toString()), price: 25.99 },
                 { ...generateRandomMenu(mockRestaurant._id.toString()), price: 9.99 }
             ]);
+            created.forEach(menu => trackMenu(menu._id.toString()));
 
             const res = await request(app)
                 .get('/api/menus?sort=price:desc');
@@ -181,7 +187,8 @@ describe('Menu Endpoints', () => {
                 const menuData = generateRandomMenu(mockRestaurant._id.toString());
                 additionalMenus.push(menuData);
             }
-            await Menu.create(additionalMenus);
+            const created = await Menu.create(additionalMenus);
+            created.forEach(menu => trackMenu(menu._id.toString()));
 
             const res = await request(app)
                 .get(`/api/menus/by-restaurant/${mockRestaurant._id}`);
@@ -197,6 +204,7 @@ describe('Menu Endpoints', () => {
         it('should return empty array for restaurant with no menus', async () => {
             // Create another restaurant with no menus
             const anotherRestaurant = await Restaurant.create(generateRandomRestaurant());
+            trackRestaurant(anotherRestaurant._id.toString());
 
             const res = await request(app)
                 .get(`/api/menus/by-restaurant/${anotherRestaurant._id}`);
@@ -235,6 +243,11 @@ describe('Menu Endpoints', () => {
             expect(res.body.menu).to.have.property('name', newMenu.name);
             expect(res.body.menu).to.have.property('price', newMenu.price);
             expect(res.body).to.have.property('message', 'Menu créé avec succès ✅');
+            
+            // Track the created menu for cleanup
+            if (res.body.menu && res.body.menu._id) {
+                trackMenu(res.body.menu._id);
+            }
         });
 
         it('should create menu with only required fields', async () => {
@@ -252,6 +265,11 @@ describe('Menu Endpoints', () => {
             expect(res.status).to.equal(201);
             expect(res.body.menu).to.have.property('name', minimalMenu.name);
             expect(res.body.menu).to.have.property('price', minimalMenu.price);
+            
+            // Track the created menu for cleanup
+            if (res.body.menu && res.body.menu._id) {
+                trackMenu(res.body.menu._id);
+            }
         });
 
         it('should create menu with all optional fields', async () => {
@@ -271,6 +289,11 @@ describe('Menu Endpoints', () => {
             expect(res.status).to.equal(201);
             expect(res.body.menu).to.have.property('description', fullMenu.description);
             expect(res.body.menu).to.have.property('category', fullMenu.category);
+            
+            // Track the created menu for cleanup
+            if (res.body.menu && res.body.menu._id) {
+                trackMenu(res.body.menu._id);
+            }
         });
 
         it('should not create menu with missing name', async () => {
@@ -394,6 +417,7 @@ describe('Menu Endpoints', () => {
                 phone: '+33123456789',
                 opening_hours: '10:00-22:00'
             });
+            trackRestaurant(secondRestaurant._id.toString());
 
             const sameName = 'Shared Menu Name';
 
@@ -410,6 +434,11 @@ describe('Menu Endpoints', () => {
                 .send(menu1);
 
             expect(res1.status).to.equal(201);
+            
+            // Track the first menu
+            if (res1.body.menu && res1.body.menu._id) {
+                trackMenu(res1.body.menu._id);
+            }
 
             // Create menu with same name in second restaurant
             const menu2 = {
@@ -425,6 +454,11 @@ describe('Menu Endpoints', () => {
 
             expect(res2.status).to.equal(201);
             expect(res2.body.menu).to.have.property('name', sameName);
+            
+            // Track the second menu
+            if (res2.body.menu && res2.body.menu._id) {
+                trackMenu(res2.body.menu._id);
+            }
         });
     });
 
@@ -435,6 +469,7 @@ describe('Menu Endpoints', () => {
             // Create a test menu to update
             const newMenu = generateRandomMenu(mockRestaurant._id.toString());
             testMenu = await Menu.create(newMenu);
+            trackMenu(testMenu._id.toString());
         });
 
         it('should update menu as admin', async () => {
@@ -522,6 +557,7 @@ describe('Menu Endpoints', () => {
                 price: generateRandomMenuPrice(),
                 restaurantId: mockRestaurant._id
             });
+            trackMenu(secondMenu._id.toString());
 
             // Try to update testMenu to have the same name as secondMenu
             const res = await request(app)
@@ -557,6 +593,7 @@ describe('Menu Endpoints', () => {
             // Create a test menu to delete
             const newMenu = generateRandomMenu(mockRestaurant._id.toString());
             testMenu = await Menu.create(newMenu);
+            trackMenu(testMenu._id.toString());
         });
 
         it('should delete menu as admin', async () => {

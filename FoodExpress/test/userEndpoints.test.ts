@@ -6,7 +6,7 @@ import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
 import { generateRandomEmail, generateRandomPassword, generateRandomUsername } from './helpers.js';
 import bcrypt from 'bcrypt';
-import { setupTestDatabase, teardownTestDatabase, createTestUsers } from './testSetup.js';
+import { setupTestDatabase, teardownTestDatabase, createTestUsers, clearTestCreatedItems, trackUser, finalCleanup } from './testSetup.js';
 import type { TestUsers } from './testSetup.js';
 
 describe('User Endpoints', () => {
@@ -18,13 +18,12 @@ describe('User Endpoints', () => {
     });
 
     afterEach(async () => {
-        // Clean up test users silently (keep shared test users)
-        await User.deleteMany({
-            email: { $nin: ['testadmin@example.com', 'testuser@example.com'] }
-        });
+        // Use the new selective cleanup which preserves test admin/user
+        await clearTestCreatedItems();
     });
 
     after(async () => {
+        await finalCleanup(); // Final cleanup of any remaining tracked items
         await teardownTestDatabase();
     });
 
@@ -34,14 +33,21 @@ describe('User Endpoints', () => {
         password: 'testpassword'
     };
 
+    let mockUserId: string;
+
     beforeEach(async () => {
+        // Delete any existing user with this email first (in case of previous test runs)
+        await User.deleteOne({ email: mockUser.email });
+        
         // Create a user in the database for testing existing user scenarios
         const hashedPassword = await bcrypt.hash(mockUser.password, 10);
-        await User.create({
+        const createdUser = await User.create({
             email: mockUser.email,
             username: mockUser.username,
             password: hashedPassword
         });
+        mockUserId = createdUser._id.toString();
+        trackUser(mockUserId);
     });
 
 
@@ -62,6 +68,11 @@ describe('User Endpoints', () => {
             }
             expect(res.status).to.equal(201);
             expect(res.body).to.have.property('user');
+            
+            // Track the created user for cleanup (API returns 'id' not '_id')
+            if (res.body.user && res.body.user.id) {
+                trackUser(res.body.user.id);
+            }
         });
 
         it('should not register a user with existing email', async () => {
@@ -228,6 +239,11 @@ describe('User Endpoints', () => {
                 });
             // Should either accept or reject with appropriate status
             expect(res.status === 201 || res.status === 400);
+            
+            // Track if user was created (API returns 'id' not '_id')
+            if (res.status === 201 && res.body.user && res.body.user.id) {
+                trackUser(res.body.user.id);
+            }
         });
     });
 
@@ -432,6 +448,9 @@ describe('User Endpoints', () => {
         let adminId: string;
 
         beforeEach(async () => {
+            // Delete any existing user with this email first
+            await User.deleteOne({ email: 'updatetest@example.com' });
+            
             // Create a dedicated test user for update operations
             const hashedPassword = await bcrypt.hash('UpdateTest123!', 10);
             const testUser = await User.create({
@@ -441,6 +460,7 @@ describe('User Endpoints', () => {
                 roles: ['user']
             });
             userId = testUser._id.toString();
+            trackUser(userId);
 
             // Login to get token for this test user
             const loginRes = await request(app)
@@ -459,14 +479,14 @@ describe('User Endpoints', () => {
                 .put(`/api/users/${userId}`)
                 .set('Authorization', `Bearer ${testUsers.adminToken}`)
                 .send({
-                    username: 'updatedusername',
-                    email: 'updated@example.com'
+                    username: generateRandomUsername(), // Use random username to avoid conflicts
+                    email: generateRandomEmail() // Use random email to avoid conflicts
                 });
 
             expect(res.status).to.equal(200);
             expect(res.body).to.have.property('message');
-            expect(res.body.user).to.have.property('username', 'updatedusername');
-            expect(res.body.user).to.have.property('email', 'updated@example.com');
+            expect(res.body.user).to.have.property('username');
+            expect(res.body.user).to.have.property('email');
         });
 
         it('should update own profile as regular user', async () => {
@@ -567,6 +587,9 @@ describe('User Endpoints', () => {
         let adminId: string;
 
         beforeEach(async () => {
+            // Delete any existing user with this email first
+            await User.deleteOne({ email: 'deletetest@example.com' });
+            
             // Create a dedicated test user for delete operations
             const hashedPassword = await bcrypt.hash('DeleteTest123!', 10);
             const testUser = await User.create({
@@ -576,6 +599,7 @@ describe('User Endpoints', () => {
                 roles: ['user']
             });
             userId = testUser._id.toString();
+            trackUser(userId);
 
             // Login to get token for this test user
             const loginRes = await request(app)

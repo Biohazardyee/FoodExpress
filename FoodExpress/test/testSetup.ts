@@ -14,7 +14,19 @@ export interface TestUsers {
     regularUser: any;
 }
 
+// Track items created during tests for cleanup
+interface TestDataTracker {
+    menus: Set<string>;
+    restaurants: Set<string>;
+    users: Set<string>;
+}
+
 let globalTestUsers: TestUsers | null = null;
+let testDataTracker: TestDataTracker = {
+    menus: new Set(),
+    restaurants: new Set(),
+    users: new Set()
+};
 
 export async function setupTestDatabase(): Promise<void> {
     const mongoUri = process.env.MONGO_DB;
@@ -54,6 +66,57 @@ export async function clearTestDb(): Promise<void> {
         if (coll.name.startsWith('system.')) continue;
         await db.collection(coll.name).deleteMany({});
     }
+}
+
+// New function to clear only test-created items
+export async function clearTestCreatedItems(): Promise<void> {
+    const { Menu } = await import('../schema/menus.js');
+    const { Restaurant } = await import('../schema/restaurants.js');
+    const { User } = await import('../schema/users.js');
+
+
+    // Delete only tracked items
+    if (testDataTracker.menus.size > 0) {
+        await Menu.deleteMany({ _id: { $in: Array.from(testDataTracker.menus) } });
+        testDataTracker.menus.clear();
+    }
+
+    if (testDataTracker.restaurants.size > 0) {
+        await Restaurant.deleteMany({ _id: { $in: Array.from(testDataTracker.restaurants) } });
+        testDataTracker.restaurants.clear();
+    }
+
+    if (testDataTracker.users.size > 0) {
+        // Don't delete the test admin and regular user
+        const testUserEmails = ['testadmin@example.com', 'testuser@example.com'];
+        await User.deleteMany({ 
+            _id: { $in: Array.from(testDataTracker.users) },
+            email: { $nin: testUserEmails }
+        });
+        testDataTracker.users.clear();
+    }
+}
+
+// Final cleanup function to be called in after() hook - just calls clearTestCreatedItems
+export async function finalCleanup(): Promise<void> {
+    await clearTestCreatedItems();
+}
+
+// Helper functions to track created items
+export function trackMenu(id: string): void {
+    testDataTracker.menus.add(id);
+}
+
+export function trackRestaurant(id: string): void {
+    testDataTracker.restaurants.add(id);
+}
+
+export function trackUser(id: string): void {
+    testDataTracker.users.add(id);
+}
+
+export function getTestDataTracker(): TestDataTracker {
+    return testDataTracker;
 }
 
 export async function createTestUsers(): Promise<TestUsers> {

@@ -10,7 +10,8 @@
     "test:coverage": "set NODE_ENV=test&& c8 npm test",
     "coverage:report": "c8 report --reporter=html --reporter=text",
     "coverage:json": "c8 report --reporter=json",
-    "clean": "powershell -Command \"Remove-Item -Recurse -Force coverage, .nyc_output, dist -ErrorAction SilentlyContinue\""
+    "clean": "powershell -Command \"Remove-Item -Recurse -Force coverage, .nyc_output, dist -ErrorAction SilentlyContinue\"",
+    "clean:testdb": "node --loader ts-node/esm scripts/clean-test-db.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
