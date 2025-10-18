@@ -7,13 +7,13 @@ export function checkAdmin(req: Request, res: Response, next: NextFunction) {
         const loggedUser = (req as any).user;
 
         if (!loggedUser) {
-            throw new BadRequest("Utilisateur non authentifié");
+            throw new BadRequest("User not authenticated");
         }
 
         const isAdmin = loggedUser.roles?.includes('admin');
 
         if (!isAdmin) {
-            throw new Forbidden("Accès refusé : réservé aux administrateurs");
+            throw new Forbidden("Access denied: admin only");
         }
 
         next();

@@ -143,7 +143,7 @@ class UserController extends Controller {
             const updatedUser = await this.service.update(id, patch);
 
             res.json({
-                message: "L'utilisateur a bien été mis à jour ✅",
+                message: "User Updated successfully",
                 user: updatedUser
             });
 

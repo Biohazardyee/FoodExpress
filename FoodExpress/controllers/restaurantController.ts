@@ -39,7 +39,7 @@ class RestaurantController extends Controller {
             const createdRestaurant = await this.service.add(newUserData as IRestaurant);
 
             res.status(201).json({
-                message: "Restaurant créé avec succès ✅",
+                message: "Restaurant Created successfully",
                 restaurant: createdRestaurant
             });
         }
@@ -135,7 +135,7 @@ class RestaurantController extends Controller {
             const updatedRestaurant = await this.service.update(id, patch);
 
             res.json({
-                message: "Le restaurant a bien été mis à jour ✅",
+                message: "Restaurant Updated successfully",
                 restaurant: updatedRestaurant
             });
 

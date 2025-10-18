@@ -13,12 +13,12 @@ export function authGuard(req: Request, _res: Response, next: NextFunction) {
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-        return next(new Unauthorized('Token manquant'));
+        return next(new Unauthorized('Missing token'));
     }
     try {
         (req as any).user = jwt.verify(token, JWT_SECRET);
         next();
     } catch {
-        return next(new Unauthorized('Token invalide ou expiré'));
+        return next(new Unauthorized('Expired or invalid token'));
     }
 }

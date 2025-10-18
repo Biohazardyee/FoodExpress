@@ -6,7 +6,7 @@ export function checkAdminOrSelf(req: Request, res: Response, next: NextFunction
         // req.user is injected by auth middleware; cast to any to satisfy TS here
         const loggedUser = (req as any).user;
         if (!loggedUser) {
-            throw new BadRequest("Utilisateur non authentifié");
+            throw new BadRequest("User not authenticated");
         }
 
         const targetUserId = req.params.id;
@@ -16,7 +16,7 @@ export function checkAdminOrSelf(req: Request, res: Response, next: NextFunction
             return next();
         }
 
-        throw new Forbidden("Accès refusé : réservé à l'utilisateur ou à un admin");
+        throw new Forbidden("Access denied: admin or self only");
 
     } catch (err) {
         next(err);

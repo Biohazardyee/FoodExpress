@@ -11,24 +11,23 @@ describe('Database Configuration', () => {
     let originalMongoDb: string | undefined;
 
     beforeEach(() => {
-        // Backup original environment variable
+
         originalMongoDb = process.env.MONGO_DB;
 
-        // Stub console methods to avoid cluttering test output
+
         consoleLogStub = sinon.stub(console, 'log');
         consoleErrorStub = sinon.stub(console, 'error');
 
-        // Stub process.exit to prevent actual exit during tests
+
         processExitStub = sinon.stub(process, 'exit').callsFake(() => {
             throw new Error('process.exit called');
         });
 
-        // Stub mongoose.connect
         mongooseConnectStub = sinon.stub(mongoose, 'connect');
     });
 
     afterEach(() => {
-        // Restore all stubs
+
         consoleLogStub.restore();
         consoleErrorStub.restore();
         processExitStub.restore();
@@ -104,7 +103,7 @@ describe('Database Configuration', () => {
 
         it('should handle different types of connection errors', async () => {
 
-            const networkError = new Error('ECONNREFUSED');
+            const networkError = new Error('Network error');
             mongooseConnectStub.rejects(networkError);
 
             const { connectDB } = await import('../config/database.js');

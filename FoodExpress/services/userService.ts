@@ -29,10 +29,6 @@ class UserService extends Service<IUser, string> {
         });
     }
 
-    // async register(data: Partial<IUser>): Promise<IUser> {
-    //     return await User.create(data);
-    // }
-
     async update(id: string, patch: Partial<IUser>): Promise<IUser> {
         const updatedUser = await User.findByIdAndUpdate(id, patch, { new: true });
         if (!updatedUser) throw new NotFound('User not found');

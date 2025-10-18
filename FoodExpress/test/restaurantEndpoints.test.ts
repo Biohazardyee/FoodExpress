@@ -177,7 +177,7 @@ describe('Restaurant Endpoints', () => {
             expect(res.status).to.equal(201);
             expect(res.body).to.have.property('restaurant');
             expect(res.body.restaurant).to.have.property('name', newRestaurant.name);
-            expect(res.body).to.have.property('message', 'Restaurant créé avec succès ✅');
+            expect(res.body).to.have.property('message', 'Restaurant Created successfully');
 
             // Track the created restaurant for cleanup
             if (res.body.restaurant && res.body.restaurant._id) {
@@ -259,7 +259,7 @@ describe('Restaurant Endpoints', () => {
             expect(res.body).to.have.property('restaurant');
             expect(res.body.restaurant).to.have.property('name', updatedData.name);
             expect(res.body.restaurant).to.have.property('address', updatedData.address);
-            expect(res.body).to.have.property('message', 'Le restaurant a bien été mis à jour ✅');
+            expect(res.body).to.have.property('message', 'Restaurant Updated successfully');
         });
 
         it('should update only specific fields', async () => {

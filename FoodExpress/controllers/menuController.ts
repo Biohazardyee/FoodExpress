@@ -153,7 +153,7 @@ class MenuController extends Controller {
             const updatedMenu = await this.service.update(id, patch);
 
             res.json({
-                message: "Le menu a bien été mis à jour ✅",
+                message: "Menu Updated successfully",
                 menu: updatedMenu
             });
         } catch (error) {

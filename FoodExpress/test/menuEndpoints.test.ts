@@ -12,7 +12,6 @@ import {
     generateRandomMenuCategory,
     generateRandomRestaurant,
     clearTestCreatedItems,
-    disconnectTestDb
 } from './helpers.js';
 import { setupTestDatabase, teardownTestDatabase, createTestUsers, trackMenu, trackRestaurant, finalCleanup } from './testSetup.js';
 import type { TestUsers } from './testSetup.js';
@@ -490,7 +489,7 @@ describe('Menu Endpoints', () => {
             expect(res.body.menu).to.have.property('description', updatedData.description);
             expect(res.body.menu).to.have.property('price', updatedData.price);
             expect(res.body.menu).to.have.property('category', updatedData.category);
-            expect(res.body).to.have.property('message', 'Le menu a bien été mis à jour ✅');
+            expect(res.body).to.have.property('message', 'Menu Updated successfully');
         });
 
         it('should update only specific fields', async () => {
