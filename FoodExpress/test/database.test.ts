@@ -1,4 +1,4 @@
-import { describe, it, before, after, beforeEach, afterEach } from 'mocha';
+import { describe, it, beforeEach, afterEach } from 'mocha';
 import { expect } from 'chai';
 import mongoose from 'mongoose';
 import sinon from 'sinon';
@@ -13,16 +13,16 @@ describe('Database Configuration', () => {
     beforeEach(() => {
         // Backup original environment variable
         originalMongoDb = process.env.MONGO_DB;
-        
+
         // Stub console methods to avoid cluttering test output
         consoleLogStub = sinon.stub(console, 'log');
         consoleErrorStub = sinon.stub(console, 'error');
-        
+
         // Stub process.exit to prevent actual exit during tests
         processExitStub = sinon.stub(process, 'exit').callsFake(() => {
             throw new Error('process.exit called');
         });
-        
+
         // Stub mongoose.connect
         mongooseConnectStub = sinon.stub(mongoose, 'connect');
     });
@@ -33,8 +33,8 @@ describe('Database Configuration', () => {
         consoleErrorStub.restore();
         processExitStub.restore();
         mongooseConnectStub.restore();
-        
-    
+
+
         if (originalMongoDb !== undefined) {
             process.env.MONGO_DB = originalMongoDb;
         } else {
@@ -44,16 +44,15 @@ describe('Database Configuration', () => {
 
     describe('connectDB', () => {
         it('should successfully connect to MongoDB with configured URI', async () => {
-            // Mock successful connection
+
             mongooseConnectStub.resolves();
 
-            // Import after environment is set
             const { connectDB } = await import('../config/database.js');
             await connectDB();
 
             expect(mongooseConnectStub.calledOnce).to.be.true;
             expect(consoleLogStub.calledWith('✅ Connecté à MongoDB Atlas !')).to.be.true;
-            
+
             // Check if mongoose.connect was called with correct options structure
             const callArgs = mongooseConnectStub.getCall(0).args;
             expect(callArgs[1]).to.deep.equal({
@@ -73,7 +72,7 @@ describe('Database Configuration', () => {
 
             try {
                 await connectDB();
-                // Should not reach here
+
                 expect.fail('Expected connectDB to throw');
             } catch (error: any) {
                 expect(error.message).to.equal('process.exit called');
@@ -104,7 +103,7 @@ describe('Database Configuration', () => {
         });
 
         it('should handle different types of connection errors', async () => {
-            // Test with network error
+
             const networkError = new Error('ECONNREFUSED');
             mongooseConnectStub.rejects(networkError);
 

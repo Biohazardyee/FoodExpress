@@ -7,11 +7,11 @@ import { IMenu } from '../schema/menus.js';
 // (populated or not, it works either way)
 
 export function getRestaurantId(menu: IMenu): Types.ObjectId {
-    const r = menu.restaurantId as any;
+    const restaurant = menu.restaurantId as any;
     // populated document case (has _id)
-    if (r && (r._id ?? r.id)) {
+    if (restaurant && (restaurant._id ?? restaurant.id)) {
         // prefer _id if present (ObjectId), fallback to id
-        return (r._id ?? r.id) as Types.ObjectId;
+        return (restaurant._id ?? restaurant.id) as Types.ObjectId;
     }
     // already an ObjectId
     return menu.restaurantId as Types.ObjectId;

@@ -11,7 +11,7 @@ export function validateUserRegistration(req: Request, res: Response, next: Next
             throw new BadRequest('Email, username and password are required');
         }
 
-         // Validate against empty/whitespace strings FIRST
+        // Validate against empty/whitespace strings FIRST
         if (!email.trim() || !username.trim() || !password.trim()) {
             throw new BadRequest('Email, username and password cannot be empty or whitespace');
         }

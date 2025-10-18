@@ -89,7 +89,7 @@ export async function clearTestCreatedItems(): Promise<void> {
     if (testDataTracker.users.size > 0) {
         // Don't delete the test admin and regular user
         const testUserEmails = ['testadmin@example.com', 'testuser@example.com'];
-        await User.deleteMany({ 
+        await User.deleteMany({
             _id: { $in: Array.from(testDataTracker.users) },
             email: { $nin: testUserEmails }
         });
@@ -157,7 +157,7 @@ export async function createTestUsers(): Promise<TestUsers> {
         } else {
             regularUser = existingUser;
         }
-        
+
         console.log('   ✓ Admin user created');
         console.log('   ✓ Regular user created');
     }

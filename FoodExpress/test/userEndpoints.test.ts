@@ -1,6 +1,5 @@
 import app from '../app.js';
 import request from 'supertest';
-import mongoose from 'mongoose';
 import { User } from '../schema/users.js';
 import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
@@ -38,7 +37,7 @@ describe('User Endpoints', () => {
     beforeEach(async () => {
         // Delete any existing user with this email first (in case of previous test runs)
         await User.deleteOne({ email: mockUser.email });
-        
+
         // Create a user in the database for testing existing user scenarios
         const hashedPassword = await bcrypt.hash(mockUser.password, 10);
         const createdUser = await User.create({
@@ -68,7 +67,7 @@ describe('User Endpoints', () => {
             }
             expect(res.status).to.equal(201);
             expect(res.body).to.have.property('user');
-            
+
             // Track the created user for cleanup (API returns 'id' not '_id')
             if (res.body.user && res.body.user.id) {
                 trackUser(res.body.user.id);
@@ -239,7 +238,7 @@ describe('User Endpoints', () => {
                 });
             // Should either accept or reject with appropriate status
             expect(res.status === 201 || res.status === 400);
-            
+
             // Track if user was created (API returns 'id' not '_id')
             if (res.status === 201 && res.body.user && res.body.user.id) {
                 trackUser(res.body.user.id);
@@ -450,7 +449,7 @@ describe('User Endpoints', () => {
         beforeEach(async () => {
             // Delete any existing user with this email first
             await User.deleteOne({ email: 'updatetest@example.com' });
-            
+
             // Create a dedicated test user for update operations
             const hashedPassword = await bcrypt.hash('UpdateTest123!', 10);
             const testUser = await User.create({
@@ -589,7 +588,7 @@ describe('User Endpoints', () => {
         beforeEach(async () => {
             // Delete any existing user with this email first
             await User.deleteOne({ email: 'deletetest@example.com' });
-            
+
             // Create a dedicated test user for delete operations
             const hashedPassword = await bcrypt.hash('DeleteTest123!', 10);
             const testUser = await User.create({

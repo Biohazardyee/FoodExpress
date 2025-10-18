@@ -20,7 +20,7 @@ class UserService extends Service<IUser, string> {
     }
 
     async getByEmail(email: string): Promise<IUser | null> {
-        return User.findOne({email});
+        return User.findOne({ email });
     }
 
     async getByUsername(username: string): Promise<IUser | null> {

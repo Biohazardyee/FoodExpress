@@ -2,14 +2,14 @@ import { Service } from './service.js';
 import { Menu, IMenu } from '../schema/menus.js';
 import { NotFound } from '../utils/errors.js';
 import { populate } from 'dotenv';
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose from "mongoose";
 
 class MenuService extends Service<IMenu, string> {
     async add(data: IMenu): Promise<IMenu> {
         return await Menu.create(data);
     }
 
-    async getAll (sort: any, page = 1, limit = 10): Promise<IMenu[]> {
+    async getAll(sort: any, page = 1, limit = 10): Promise<IMenu[]> {
         const skip = (page - 1) * limit;
         return Menu.find().sort(sort).skip(skip).limit(limit).exec();
     }

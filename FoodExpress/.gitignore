@@ -23,6 +23,7 @@ build/
 out/
 lib/
 *.tsbuildinfo
+package-lock.json
 
 # Compiled JavaScript (only ignore in specific directories)
 dist/**/*.js

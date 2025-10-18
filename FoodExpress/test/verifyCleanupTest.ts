@@ -15,12 +15,12 @@ describe('🔍 Verify Cleanup System', () => {
 
     before(async () => {
         await setupTestDatabase();
-        
+
         // Count items BEFORE test
         initialMenuCount = await Menu.countDocuments();
         initialRestaurantCount = await Restaurant.countDocuments();
         initialUserCount = await User.countDocuments();
-        
+
         console.log(`\n📊 Initial counts:`);
         console.log(`   Menus: ${initialMenuCount}`);
         console.log(`   Restaurants: ${initialRestaurantCount}`);
@@ -42,7 +42,7 @@ describe('🔍 Verify Cleanup System', () => {
         });
         createdRestaurantId = restaurant._id.toString();
         trackRestaurant(createdRestaurantId);
-        
+
         // Create a menu
         const menu = await Menu.create({
             name: 'Cleanup Test Menu',
@@ -65,11 +65,11 @@ describe('🔍 Verify Cleanup System', () => {
         const menuExists = await Menu.findById(createdMenuId);
         const restaurantExists = await Restaurant.findById(createdRestaurantId);
         const userExists = await User.findById(createdUserId);
-        
+
         expect(menuExists).to.not.be.null;
         expect(restaurantExists).to.not.be.null;
         expect(userExists).to.not.be.null;
-        
+
         console.log(`\n✅ Created and verified:`);
         console.log(`   Menu: ${createdMenuId}`);
         console.log(`   Restaurant: ${createdRestaurantId}`);
@@ -82,7 +82,7 @@ describe('🔍 Verify Cleanup System', () => {
         const menuAfter = await Menu.findById(createdMenuId);
         const restaurantAfter = await Restaurant.findById(createdRestaurantId);
         const userAfter = await User.findById(createdUserId);
-        
+
         expect(menuAfter).to.be.null;
         expect(restaurantAfter).to.be.null;
         expect(userAfter).to.be.null;
@@ -96,7 +96,7 @@ describe('🔍 Verify Cleanup System', () => {
         const finalMenuCount = await Menu.countDocuments();
         const finalRestaurantCount = await Restaurant.countDocuments();
         const finalUserCount = await User.countDocuments();
-        
+
         expect(finalMenuCount).to.equal(initialMenuCount);
         expect(finalRestaurantCount).to.equal(initialRestaurantCount);
         expect(finalUserCount).to.equal(initialUserCount);

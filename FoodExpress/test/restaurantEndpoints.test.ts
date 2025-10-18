@@ -1,14 +1,10 @@
 import app from '../app.js';
 import request from 'supertest';
-import mongoose from 'mongoose';
 import { Restaurant } from '../schema/restaurants.js';
-import { User } from '../schema/users.js';
 import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
-import bcrypt from 'bcrypt';
 import {
     generateRandomRestaurant,
-    generateRandomRestaurantName,
     generateRandomAddress,
     generateRandomPhone,
     generateRandomOpeningHours
@@ -182,7 +178,7 @@ describe('Restaurant Endpoints', () => {
             expect(res.body).to.have.property('restaurant');
             expect(res.body.restaurant).to.have.property('name', newRestaurant.name);
             expect(res.body).to.have.property('message', 'Restaurant créé avec succès ✅');
-            
+
             // Track the created restaurant for cleanup
             if (res.body.restaurant && res.body.restaurant._id) {
                 trackRestaurant(res.body.restaurant._id);

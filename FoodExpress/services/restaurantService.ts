@@ -18,7 +18,7 @@ class RestaurantService extends Service<IRestaurant, string> {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             throw new BadRequest('Invalid restaurant ID format');
         }
-        
+
         const restaurant = await Restaurant.findById(id);
         if (!restaurant) {
             throw new NotFound('Restaurant not found');
@@ -37,7 +37,7 @@ class RestaurantService extends Service<IRestaurant, string> {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             throw new BadRequest('Invalid restaurant ID format');
         }
-        
+
         const updatedRestaurant = await Restaurant.findByIdAndUpdate(id, patch, { new: true });
         if (!updatedRestaurant) throw new NotFound('Restaurant not found');
         return updatedRestaurant;
@@ -48,7 +48,7 @@ class RestaurantService extends Service<IRestaurant, string> {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             throw new BadRequest('Invalid restaurant ID format');
         }
-        
+
         const deletedRestaurant = await Restaurant.findByIdAndDelete(id);
         if (!deletedRestaurant) {
             throw new NotFound('Restaurant not found');

@@ -1,10 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Controller } from './controller.js';
-import { Unauthorized, BadRequest, NotFound } from '../utils/errors.js';
+import { BadRequest, NotFound } from '../utils/errors.js';
 import restaurantService from '../services/restaurantService.js';
-import {IRestaurant, Restaurant} from '../schema/restaurants.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import { IRestaurant } from '../schema/restaurants.js';
 import dotenv from "dotenv";
 import mongoose from 'mongoose';
 
@@ -92,12 +90,12 @@ class RestaurantController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
-            
+
             // Validate ObjectId format early
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return next(new BadRequest('Invalid restaurant ID format'));
             }
-            
+
             const restaurant = await this.service.getById(id);
             if (!restaurant) return next(new NotFound('Restaurant not found'));
 

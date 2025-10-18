@@ -1,9 +1,9 @@
-import express, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { BadRequest } from '../utils/errors.js';
 
 export function validateRestaurantCreation(req: Request, res: Response, next: NextFunction) {
     try {
-        const {name, address, phone, opening_hours} = req.body;
+        const { name, address, phone, opening_hours } = req.body;
 
         if (!name || !address || !phone || !opening_hours) {
             throw new BadRequest('All fields (name, address, phone, opening_hours) are required');
@@ -37,10 +37,10 @@ export function validateRestaurantCreation(req: Request, res: Response, next: Ne
         next(error);
     }
 }
-        
+
 export function validateRestaurantUpdate(req: Request, res: Response, next: NextFunction) {
     try {
-        const {name, address, phone, opening_hours} = req.body;
+        const { name, address, phone, opening_hours } = req.body;
         if (!name && !address && !phone && !opening_hours) {
             throw new BadRequest('At least one field (name, address, phone, opening_hours) must be provided for update');
         }
@@ -78,7 +78,7 @@ export function validateRestaurantUpdate(req: Request, res: Response, next: Next
                 throw new BadRequest('Opening hours must be between 5 and 100 characters long');
             }
         }
-        
+
         // If validation passes, proceed to next middleware
         next();
     } catch (error) {

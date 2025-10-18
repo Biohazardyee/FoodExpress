@@ -1,9 +1,7 @@
 import app from '../app.js';
 import request from 'supertest';
-import mongoose from 'mongoose';
 import { Menu } from '../schema/menus.js';
 import { Restaurant } from '../schema/restaurants.js';
-import { User } from '../schema/users.js';
 import { before, describe, after, afterEach, it } from 'mocha';
 import { expect } from 'chai';
 import {
@@ -243,11 +241,12 @@ describe('Menu Endpoints', () => {
             expect(res.body.menu).to.have.property('name', newMenu.name);
             expect(res.body.menu).to.have.property('price', newMenu.price);
             expect(res.body).to.have.property('message', 'Menu créé avec succès ✅');
-            
+
             // Track the created menu for cleanup
             if (res.body.menu && res.body.menu._id) {
                 trackMenu(res.body.menu._id);
             }
+
         });
 
         it('should create menu with only required fields', async () => {
@@ -265,7 +264,7 @@ describe('Menu Endpoints', () => {
             expect(res.status).to.equal(201);
             expect(res.body.menu).to.have.property('name', minimalMenu.name);
             expect(res.body.menu).to.have.property('price', minimalMenu.price);
-            
+
             // Track the created menu for cleanup
             if (res.body.menu && res.body.menu._id) {
                 trackMenu(res.body.menu._id);
@@ -289,7 +288,7 @@ describe('Menu Endpoints', () => {
             expect(res.status).to.equal(201);
             expect(res.body.menu).to.have.property('description', fullMenu.description);
             expect(res.body.menu).to.have.property('category', fullMenu.category);
-            
+
             // Track the created menu for cleanup
             if (res.body.menu && res.body.menu._id) {
                 trackMenu(res.body.menu._id);
@@ -434,7 +433,7 @@ describe('Menu Endpoints', () => {
                 .send(menu1);
 
             expect(res1.status).to.equal(201);
-            
+
             // Track the first menu
             if (res1.body.menu && res1.body.menu._id) {
                 trackMenu(res1.body.menu._id);
@@ -454,7 +453,7 @@ describe('Menu Endpoints', () => {
 
             expect(res2.status).to.equal(201);
             expect(res2.body.menu).to.have.property('name', sameName);
-            
+
             // Track the second menu
             if (res2.body.menu && res2.body.menu._id) {
                 trackMenu(res2.body.menu._id);
@@ -575,9 +574,9 @@ describe('Menu Endpoints', () => {
             const res = await request(app)
                 .put(`/api/menus/${testMenu._id}`)
                 .set('Authorization', `Bearer ${testUsers.adminToken}`)
-                .send({ 
+                .send({
                     name: originalName,
-                    price: 99.99 
+                    price: 99.99
                 });
 
             expect(res.status).to.equal(200);

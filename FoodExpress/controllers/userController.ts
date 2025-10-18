@@ -21,7 +21,7 @@ class UserController extends Controller {
     async add(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, username, password, roles } = req.body;
-            
+
             // Check for existing user
             const existingUserByEmail = await this.service.getByEmail(email);
             if (existingUserByEmail) {
@@ -35,14 +35,13 @@ class UserController extends Controller {
 
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // On crée l'objet user sans mettre 'role' si non fourni
+
             const newUserData: Partial<IUser> = {
                 username,
                 email,
                 password: hashedPassword,
             };
 
-            // Si un rôle est envoyé dans la requête, on l'ajoute
             if (roles) {
                 newUserData.roles = roles;
             }
@@ -50,7 +49,7 @@ class UserController extends Controller {
             const createdUser = await this.service.add(newUserData as IUser);
 
             res.status(201).json({
-                message: "Utilisateur créé avec succès ✅",
+                message: "Created User Successfully",
                 user: createdUser
             });
         }
@@ -107,12 +106,12 @@ class UserController extends Controller {
         try {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
-            
+
             // Validate ObjectId format
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return next(new BadRequest('Invalid ID format'));
             }
-            
+
             const user = await this.service.getById(id);
             if (!user) return next(new NotFound('User not found'));
 

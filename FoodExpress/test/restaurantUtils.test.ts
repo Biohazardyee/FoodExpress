@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
-import mongoose, { Types } from 'mongoose';
-import { getRestaurantId } from '../utils/restaurant_utils.js';
+import { Types } from 'mongoose';
+import { getRestaurantId } from '../utils/restaurantUtils.js';
 import type { IMenu } from '../schema/menus.js';
 
 describe('Restaurant Utils', () => {
@@ -67,7 +67,7 @@ describe('Restaurant Utils', () => {
         it('should prefer _id over id when both are present in populated object', () => {
             const objectId1 = new Types.ObjectId();
             const objectId2 = new Types.ObjectId();
-            
+
             const populatedRestaurant = {
                 _id: objectId1,  // This should be preferred
                 id: objectId2,

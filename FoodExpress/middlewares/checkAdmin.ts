@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { Unauthorized, BadRequest, Forbidden } from '../utils/errors.js';
+import { BadRequest, Forbidden } from '../utils/errors.js';
 
 export function checkAdmin(req: Request, res: Response, next: NextFunction) {
     try {
-        // req.user set by auth middleware; cast to any to satisfy ts in tests
+
         const loggedUser = (req as any).user;
 
         if (!loggedUser) {

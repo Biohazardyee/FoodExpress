@@ -55,12 +55,12 @@ app.use(function (req, res, next) {
 app.use(function (err: any, req: Request, res: Response, next: NextFunction) {
     let status = 500;
     let message = 'Internal Server Error';
-    
+
     // Handle custom API errors
     if (err instanceof ApiError) {
         status = err.status;
         message = err.message;
-    } 
+    }
     // Handle JSON parsing errors
     else if (err instanceof SyntaxError && 'body' in err) {
         status = 400;

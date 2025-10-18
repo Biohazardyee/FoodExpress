@@ -16,9 +16,7 @@ class MenuController extends Controller {
     async add(req: Request, res: Response, next: NextFunction) {
         try {
             const { name, description, price, restaurantId, category } = req.body;
-            if (!name || !price || !restaurantId) {
-                throw new BadRequest('Title, price and restaurant are required');
-            }
+
             const restaurantExists = await restaurantService.getById(restaurantId);
 
             if (!restaurantExists) {
@@ -128,7 +126,7 @@ class MenuController extends Controller {
             const { id } = req.params;
             if (!id) return next(new BadRequest('ID is required'));
             const { name, description, price, restaurantId, category } = req.body;
-            
+
             // Get the current menu to check its restaurant
             const currentMenu = await this.service.getById(id);
             if (!currentMenu) return next(new NotFound('Menu not found'));
@@ -137,7 +135,7 @@ class MenuController extends Controller {
             if (name) {
                 const targetRestaurantId = restaurantId || currentMenu.restaurantId.toString();
                 const existingMenu = await this.service.findByRestaurantAndName(targetRestaurantId, name);
-                
+
                 // If a menu with this name exists and it's not the current menu being updated
                 if (existingMenu && existingMenu._id.toString() !== id) {
                     throw new BadRequest('A menu with this name already exists for this restaurant');

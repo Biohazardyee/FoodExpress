@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Unauthorized, BadRequest, Forbidden } from '../utils/errors.js';
+import { BadRequest, Forbidden } from '../utils/errors.js';
 
 export function checkAdminOrSelf(req: Request, res: Response, next: NextFunction) {
     try {

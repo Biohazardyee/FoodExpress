@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { BadRequest } from '../utils/errors.js';
 
 export function validateMenuCreation(req: Request, res: Response, next: NextFunction) {
