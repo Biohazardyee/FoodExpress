@@ -15,6 +15,7 @@ FoodExpress est une API RESTful développée en Node.js/Express.js permettant la
 
 - Node.js >= 16
 - npm
+- GIT
 
 ## Installation
 
