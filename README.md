@@ -107,15 +107,18 @@ npm run test:coverage
 
 ```
 FoodExpress/
-├─ src/                # Code source de l'application
+│  ├─ bin/             # binaire du projet
+│  ├─ config/          # Configuration de la DB
 │  ├─ controllers/     # Logique métier des routes
-│  ├─ models/          # Schémas Mongoose
+│  ├─ schema/          # Schémas Mongoose
 │  ├─ routes/          # Définition des routes API
 │  ├─ middlewares/     # Middlewares (auth, validation)
+│  ├─ types/           # Ajoute propriété user au type request
+│  ├─ services/        # Permet de transmettre à la DB
 │  ├─ utils/           # Fonctions utilitaires
+│  ├─ tests/           # Tests Unitaires
 │  ├─ config/          # Configuration de l'application
 │  └─ app.js           # Point d'entrée de l'application
-├─ tests/              # Tests unitaires
 ├─ .gitignore          # Fichiers et dossiers à ignorer par Git
 ├─ README.md           # Documentation du projet
 ├─ package.json        # Dépendances et scripts du projet
