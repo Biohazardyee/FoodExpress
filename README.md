@@ -7,9 +7,9 @@ FoodExpress est une API RESTful développée en Node.js/Express.js permettant la
 - Gestion des utilisateurs (CRUD, rôles user/admin, authentification JWT)
 - Gestion des restaurants (CRUD réservé aux admins, lecture publique avec tri/pagination)
 - Gestion des menus (CRUD réservé aux admins, lecture publique avec tri/pagination)
-- Validation des entrées (Joi/Yup/AJV)
+- Validation des entrées
 - Documentation Swagger (OpenAPI)
-- Tests essentiels (Jest ou Mocha/Chai)
+- Tests essentiels (Mocha)
 
 ## Prérequis
 
@@ -24,6 +24,14 @@ Clonez le dépôt et installez les dépendances :
 git clone https://github.com/Biohazardyee/FoodExpress.git
 cd FoodExpress
 npm install
+```
+
+## Configuration de l'environnement
+Créez un fichier `.env` à la racine du projet ./FoodExpress et ajoutez les variables d'environnement nécessaires :
+
+```env
+MONGO_DB={URL_DE_VOTRE_BASE_DE_DONNÉES_MONGODB}
+JWT_SECRET={VOTRE_CLEF_SECRÈTE_JWT}
 ```
 
 ## Lancement du serveur
