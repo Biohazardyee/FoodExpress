@@ -51,13 +51,7 @@ git clone https://github.com/Biohazardyee/FoodExpress.git
 cd FoodExpress
 ```
 
-2. Installez les dépendances :
-
-```bash
-npm install
-```
-
-3. Configurez les variables d'environnement :
+2. Configurez les variables d'environnement :
    Créez un fichier `.env` à la racine du projet et ajoutez :
 
 ```env
