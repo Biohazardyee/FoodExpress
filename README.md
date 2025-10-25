@@ -117,10 +117,11 @@ FoodExpress/
 │  ├─ utils/           # Fonctions utilitaires
 │  ├─ tests/           # Tests Unitaires
 │  ├─ config/          # Configuration de l'application
+|  ├─ package.json     # Dépendances et scripts du projet
+|  ├─ package-lock.json 
 │  └─ app.js           # Point d'entrée de l'application
 ├─ .gitignore          # Fichiers et dossiers à ignorer par Git
 ├─ README.md           # Documentation du projet
-├─ package.json        # Dépendances et scripts du projet
 └─ .env                # Variables d'environnement
 ```
 
