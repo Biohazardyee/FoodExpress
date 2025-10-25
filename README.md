@@ -120,7 +120,7 @@ FoodExpress/
 |  ├─ package-lock.json
 |  ├─ .gitignore       # Fichiers et dossiers à ignorer par Git
 |  ├─ .env             # Variables d'environnement
-│  └─ app.js           # Point d'entrée de l'application
+│  └─ app.ts           # Point d'entrée de l'application
 ├─ .gitignore          # Fichiers et dossiers à ignorer par Git
 └─ README.md           # Documentation du projet
 ```
