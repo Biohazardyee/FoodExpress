@@ -119,7 +119,7 @@ FoodExpress/
 │  ├─ config/          # Configuration de l'application
 |  ├─ package.json     # Dépendances et scripts du projet
 |  ├─ package-lock.json
-|  ├─ .gitignore          # Fichiers et dossiers à ignorer par Git
+|  ├─ .gitignore       # Fichiers et dossiers à ignorer par Git
 |  ├─ .env             # Variables d'environnement
 │  └─ app.js           # Point d'entrée de l'application
 ├─ .gitignore          # Fichiers et dossiers à ignorer par Git
