@@ -116,7 +116,6 @@ FoodExpress/
 │  ├─ services/        # Permet de transmettre à la DB
 │  ├─ utils/           # Fonctions utilitaires
 │  ├─ tests/           # Tests Unitaires
-│  ├─ config/          # Configuration de l'application
 |  ├─ package.json     # Dépendances et scripts du projet
 |  ├─ package-lock.json
 |  ├─ .gitignore       # Fichiers et dossiers à ignorer par Git
