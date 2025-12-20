@@ -174,7 +174,7 @@ test-results.xml
 junit.xml
 
 # Package manager lock files (choose one to keep)
-package-lock.json
+# package-lock.json
 # yarn.lock          # Uncomment to ignore yarn lock file
 
 # Local development files
