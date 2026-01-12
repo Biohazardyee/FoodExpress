@@ -8,6 +8,15 @@ services:
       - "3000:3000"
     depends_on:
       - mongo
+    
+  frontend:
+    build: ./frontend
+    container_name: foodexpress_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80" # maps container's Nginx 80 port to host 5173
+    depends_on:
+      - foodexpress
 
   mongo:
     image: mongo:7

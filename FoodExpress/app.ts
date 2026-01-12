@@ -11,12 +11,18 @@ import usersRouter from './routes/users.js';
 import restaurantsRouter from './routes/restaurants.js';
 import menusRouter from './routes/menus.js';
 import { ApiError, InternalError } from './utils/errors.js';
+import cors from "cors";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const swaggerDocument = YAML.load(path.join(__dirname, './swagger.yml'));
 
 const app = express();
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
